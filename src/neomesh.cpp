@@ -89,11 +89,23 @@ void NeoMesh::write(uint8_t * finalMsg, uint8_t finalMsgLength)
 void NeoMesh::change_node_id(uint16_t node_id)
 {
   this->switch_sapi_aapi();
+
+  // Send login command
+
+  // Change node ID
+
+  //Reboot device
 }
 
 void NeoMesh::change_network_id(uint8_t network_id[16])
 {
-  
+  this->switch_sapi_aapi();
+
+  // Send login command
+
+  // Change network ID
+
+  //Reboot device  
 }
 
 void NeoMesh::message_written()
