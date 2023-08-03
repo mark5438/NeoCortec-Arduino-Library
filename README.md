@@ -28,12 +28,12 @@ void data_callback(uint8_t n, tNcApiHostData * m)
 void setup()
 {
     neo = new NeoMesh(PROTOCOL_UART, CTS_PIN);
-    neo.host_data_callback = data_callback;
-    neo.start();
+    neo->host_data_callback = data_callback;
+    neo->start();
 
     // Send a message using the NeoMesh protocol
     uint8_t data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    neo.send_acknowledged(0x10, 0, data, 10)
+    neo->send_acknowledged(0x10, 0, data, 10)
 }
 
 void loop()
