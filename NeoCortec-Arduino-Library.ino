@@ -19,11 +19,4 @@ void setup()
 void loop()
 {
   neo->update();
-
-
-
-
-
-
-  delay(5000);
 }

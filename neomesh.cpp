@@ -49,7 +49,7 @@ NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
 
 void NeoMesh::start()
 {
-  this->serial->begin(115200);
+  this->serial->begin(this->baudrate);
   
   tNcApiRxHandlers * rxHandlers = &ncRx;
   memset( rxHandlers, 0, sizeof(tNcApiRxHandlers));
@@ -96,9 +96,9 @@ void NeoMesh::change_network_id(uint8_t network_id[16])
   
 }
 
-void test()
+void NeoMesh::message_written()
 {
-  Serial.println("test");
+  Serial.println("Message written!");
 }
 
 void NeoMesh::switch_sapi_aapi()
@@ -111,10 +111,15 @@ void NeoMesh::switch_sapi_aapi()
 
   tNcApiAltCmdParams params = {
     .msg = cmd_msg,
-    .callbackToken = test
+    .callbackToken = this
   };
   
   bool s = NcApiSendAltCmd(this->uart_num, &params);
+}
+
+void NeoMesh::set_baudrate(uint32_t baudrate)
+{
+  this->baudrate = baudrate;
 }
 
 void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t appSeqNo, uint8_t * payload, uint8_t payloadLen)
@@ -252,5 +257,6 @@ void NcApiSupportMessageReceived(uint8_t n,void * callbackToken, uint8_t * msg, 
 
 void NcApiSupportMessageWritten(uint8_t n, void * callbackToken, uint8_t * finalMsg, uint8_t finalMsgLength)
 {
-  
+  NeoMesh * neo = (NeoMesh*) callbackToken;
+  neo->message_written();
 }
