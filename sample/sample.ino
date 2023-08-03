@@ -12,7 +12,7 @@ void setup()
   Serial.println("Started");
   neo = new NeoMesh(PROTOCOL_UART, CTS_GPIO);
   neo->start();
-  neo->change_node_id(0x20);
+  neo->change_node_id(0x21);
 }
 
 void loop()

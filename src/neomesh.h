@@ -34,8 +34,18 @@
 #define SAPI_COMMAND_TAIL 0x21
 #define SAPI_COMMAND_LOGIN1 0x01
 #define SAPI_COMMAND_LOGIN2 0x03
+#define SAPI_COMMAND_START_BOOTLOADER1 0x01
+#define SAPI_COMMAND_START_BOOTLOADER2 0x13
+#define SAPI_COMMAND_GET_SETTING_FLASH1 0x01
+#define SAPI_COMMAND_GET_SETTING_FLASH2 0x06
+#define SAPI_COMMAND_SET_SETTING1 0x01
+#define SAPI_COMMAND_SET_SETTING2 0x0A
+#define SAPI_COMMAND_COMMIT_SETTINGS1 0x01
+#define SAPI_COMMAND_COMMIT_SETTINGS2 0x08
+#define SAPI_COMMAND_START_PROTOCOL1 0x01
+#define SAPI_COMMAND_START_PROTOCOL2 0x12
 
-#define SAPI_LOGIN_COMMAND_LENGTH 10
+#define NODE_ID_SETTING 0xA
 
 #if defined(UBRRH) || defined(UBRR0H)
   extern HardwareSerial Serial;
@@ -172,6 +182,11 @@ private:
   void login_sapi();
   void change_node_id_sapi(uint16_t nodeid);
   void write_raw(uint8_t * data, uint8_t length);
+  void start_bootloader();
+  void start_protocol_stack();
+  uint8_t get_setting(uint8_t setting);
+  uint8_t set_setting(uint8_t setting, uint8_t * setting_value, uint8_t setting_value_length);
+  uint8_t commit_settings();
 
   static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t * msg, uint8_t msgLength);
   static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack * p);
