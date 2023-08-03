@@ -238,13 +238,17 @@ uint8_t NeoMesh::commit_settings()
     NcApiCtsActive(this->uart_num); // TODO: better
 }
 
-void NeoMesh::wait_for_message_written()
+bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms)
 {
-    this->_message_written = false;
-    while (!this->_message_written)
+    uint64_t start = millis();
+    uint64_t end = start + timeout_ms;
+    while(!this->sapi_parser->message_available())  // TODO: Create for function to wait for message with timeout
     {
+        if(millis() - start >= end)
+            return false;
         this->update();
     }
+    return true;
 }
 
 void NeoMesh::set_baudrate(uint32_t baudrate)
