@@ -99,7 +99,7 @@ void NeoMesh::change_node_id(uint16_t node_id)
   };
 
   this->switch_sapi_aapi();
-  this->wait_for_message_written();
+  /*this->wait_for_message_written();
   delay(2000);
   this->update();
   this->login_sapi();
@@ -117,11 +117,10 @@ void NeoMesh::change_node_id(uint16_t node_id)
   this->get_setting(NODE_ID_SETTING);
   delay(2000);
   this->update();
-  this->start_protocol_stack();
+  this->start_protocol_stack();*/
+  
 
-  // Change node ID
-
-  //Reboot device
+  // TODO: Get rid of all delays. Wait for responses and check that they are OK
 }
 
 void NeoMesh::change_network_id(uint8_t network_id[16])
