@@ -1,6 +1,32 @@
+/*******************************************************************************
+ * @file neomesh.h
+ * @date 2023-08-03
+ * @author Markus Rytter (markus.r@live.dk)
+ *
+ * @copyright Copyright (c) 2023
+ *
+ *******************************************************************************/
+
+/**
+ * @addtogroup NeoMesh
+ * @{
+ */
+ 
+#ifndef NEOMESH_H
+#define NEOMESH_H
+
+/*******************************************************************************
+ *    Includes
+ ******************************************************************************/
+
 #include <HardwareSerial.h>
 #include <Arduino.h>
 #include "NcApi.h"
+
+
+/*******************************************************************************
+ *    Defines
+ ******************************************************************************/
 
 #define DEFAULT_NEOCORTEC_BAUDRATE 115200
 
@@ -20,6 +46,11 @@
   extern HardwareSerial Serial3;
   #define HAVE_HWSERIAL3
 #endif
+
+
+/*******************************************************************************
+ *    Class prototypes
+ ******************************************************************************/
 
 /**
  * @brief Object that handles connection to NeoCortec module
@@ -141,3 +172,8 @@ private:
   static pfnNcApiWesStatusCallback wes_status_callback_(uint8_t n, tNcApiWesStatus * p);
 
 };
+
+/*******************************************************************************/
+/** @} addtogroup end */
+
+#endif // NEOMESH_H
