@@ -104,8 +104,6 @@ public:
    */
   void set_baudrate(uint32_t baudrate);
 
-
-
   /**
    * @brief send an unacknowledged message to a node in the network
    * @param destNodeId The node id of the recepient
@@ -147,9 +145,8 @@ public:
   pfnNcApiWesSetupRequestCallback wes_setup_request_callback;
   pfnNcApiWesStatusCallback wes_status_callback;
 
-  void message_written();
-
   // IGNORE:
+  void message_written();
   static void pass_through_cts0();
   static void pass_through_cts1();
   static void pass_through_cts2();
