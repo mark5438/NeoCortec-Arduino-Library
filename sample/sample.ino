@@ -1,5 +1,6 @@
-#include "NcApi.h"
-#include "neomesh.h"
+#include <NcApi.h>
+#include <neomesh.h>
+#include <NeoParser.h>
 
 #define PROTOCOL_UART 1
 #define CTS_GPIO 2
