@@ -70,7 +70,8 @@ typedef enum NcApiMessageType
 	WesSetupRequestEnum       = 0x61,
 
 	// Special
-	CommandRawEnum            = 0xff
+	CommandRawEnum            = 0xff,
+	EnableSAPIOnAAPIUart      = 0x0B
 } NcApiMessageType;
 
 #define NCAPI_HOST_PREFIX_SIZE 2
