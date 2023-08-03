@@ -22,6 +22,7 @@
 #include <HardwareSerial.h>
 #include <Arduino.h>
 #include "NcApi.h"
+#include "SAPIParser.h"
 
 /*******************************************************************************
  *    Defines
@@ -171,9 +172,12 @@ private:
     uint8_t uart_num;
     uint8_t cts_pin;
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
-    HardwareSerial *serial;
+    HardwareSerial * serial;
 
     bool _message_written = false;
+    
+    SAPIParser * sapi_parser;
+    bool sapi_active = false;       // If true, the module is in bootloader mode
 
     void wait_for_message_written();
     void switch_sapi_aapi();
