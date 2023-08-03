@@ -248,6 +248,7 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_
             return false;
         this->update();
     }
+    message* = this->sapi_parser->get_pending_message();
     return true;
 }
 
