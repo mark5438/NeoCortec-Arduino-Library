@@ -136,18 +136,27 @@ void NcApiRxData(uint8_t n, uint8_t byte)
 	api->rxPosition = 0;
 }
 
-
+#include <Arduino.h>
 void NcApiExecuteCallbacks(uint8_t n, uint8_t * msg, uint8_t msgLength)
 {
+	Serial.println("Test 1");
 	tNcApiRxHandlers * handlers;
+	Serial.println("Test 2");
 	tNcApi * api = NcApiGetInstance(n);
+	Serial.println("Test 3");
 	handlers = api->NcApiRxHandlers;
+	Serial.println("Test 4");
 
 	if (handlers==0)
 		return;
+	Serial.println("Test 5");
 	
 	if (handlers->pfnReadCallback!=0)
 		handlers->pfnReadCallback(n, msg, msgLength);
+	Serial.println("Test 6");
+
+	Serial.print("MSG: ");
+	Serial.println(msg[0]);
 
 	switch (msg[0])
 	{

@@ -64,7 +64,7 @@ void NeoMesh::start()
   
   NcApiInit();
   
-  g_ncApi[1].NcApiRxHandlers=&ncRx;
+  g_ncApi[this->uart_num].NcApiRxHandlers=&ncRx;
   NcApiCallbackNwuActive(this->uart_num);
 }
 
@@ -74,8 +74,7 @@ void NeoMesh::update()
   {
     char c = this->serial->read();
     char str[8];
-    sprintf(str, "0x%x", c);
-    Serial.println(str);
+    sprintf(str, "0x%X ", c);
     NcApiRxData(this->uart_num, c);
   }
 }
@@ -89,8 +88,9 @@ void NeoMesh::write(uint8_t * finalMsg, uint8_t finalMsgLength)
 void NeoMesh::change_node_id(uint16_t node_id)
 {
   this->switch_sapi_aapi();
-
-  // Send login command
+  this->wait_for_message_written();
+  this->login_sapi();
+  this->wait_for_message_written();
 
   // Change node ID
 
@@ -110,6 +110,7 @@ void NeoMesh::change_network_id(uint8_t network_id[16])
 
 void NeoMesh::message_written()
 {
+  this->_message_written = true;
   Serial.println("Message written!");
 }
 
@@ -117,16 +118,51 @@ void NeoMesh::switch_sapi_aapi()
 {
   Serial.println("Switching SAPI to AAPI");
 
-  tNcApiAltCmdMessage cmd_msg = {
-    .cmd = 0x0B
+  uint8_t cmd = 0x0B;
+  this->write_raw(&cmd, 1);
+}
+
+void NeoMesh::login_sapi()
+{
+  uint8_t login_cmd[SAPI_LOGIN_COMMAND_LENGTH] = {  SAPI_COMMAND_HEAD, 
+                                                    SAPI_LOGIN_COMMAND_LENGTH - 2,
+                                                    SAPI_COMMAND_LOGIN1,
+                                                    SAPI_COMMAND_LOGIN2,
+                                                    0x4c, 0x76, 0x6c, 0x31, 0x30,
+                                                    SAPI_COMMAND_TAIL
+  };
+  this->write_raw(login_cmd, SAPI_LOGIN_COMMAND_LENGTH);
+}
+
+void NeoMesh::write_raw(uint8_t * data, uint8_t length)
+{
+  tNcApiSendAckMessage msg = {
+    .destNodeId = 0,
+    .destPort = 0,
+    .payloadLength = length,
+    .payload = data
   };
 
-  tNcApiAltCmdParams params = {
-    .msg = cmd_msg,
+  tNcApiSendAckParams params = {
+    .msg = msg,
     .callbackToken = this
   };
-  
-  bool s = NcApiSendAltCmd(this->uart_num, &params);
+
+  NcApiSendRaw(this->uart_num, &params);
+}
+
+void NeoMesh::change_node_id_sapi(uint16_t nodeid)
+{
+
+}
+
+void NeoMesh::wait_for_message_written()
+{
+  this->_message_written = false;
+  while(!this->_message_written)
+  {
+    this->update();
+  }
 }
 
 void NeoMesh::set_baudrate(uint32_t baudrate)
@@ -190,43 +226,43 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
 
 static pfnNcApiReadCallback NeoMesh::read_callback_(uint8_t n, uint8_t * msg, uint8_t msgLength)
 {
-  if(instances[n]->read_callback)
+  if(instances[n]->read_callback != 0)
     instances[n]->read_callback(n, msg, msgLength);
 }
 
 static pfnNcApiHostAckCallback NeoMesh::host_ack_callback_(uint8_t n, tNcApiHostAckNack * p)
 {
-  if(instances[n]->host_ack_callback)
-    instances[n]->host_ack_callback(n, p);  
+  if(instances[n]->host_ack_callback != 0)
+    instances[n]->host_ack_callback(n, p);
 }
   
 static pfnNcApiHostAckCallback NeoMesh::host_nack_callback_(uint8_t n, tNcApiHostAckNack * p)
 {
-  if(instances[n]->host_nack_callback)
-    instances[n]->host_nack_callback(n, p);  
+  if(instances[n]->host_nack_callback != 0)
+    instances[n]->host_nack_callback(n, p);
 }
 
 static pfnNcApiHostDataCallback NeoMesh::host_data_callback_(uint8_t n, tNcApiHostData * m)
 {
-  if(instances[n]->host_data_callback)
-    instances[n]->host_data_callback(n, m);  
+  if(instances[n]->host_data_callback != 0)
+    instances[n]->host_data_callback(n, m);
 }
 
 static pfnNcApiHostDataHapaCallback NeoMesh::host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa * p)
 {
-  if(instances[n]->host_data_hapa_callback)
-    instances[n]->host_data_hapa_callback(n, p);  
+  if(instances[n]->host_data_hapa_callback != 0)
+    instances[n]->host_data_hapa_callback(n, p);
 }
 
 static pfnNcApiWesSetupRequestCallback NeoMesh::wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest * p)
 {
-  if(instances[n]->wes_setup_request_callback)
+  if(instances[n]->wes_setup_request_callback != 0)
     instances[n]->wes_setup_request_callback(n, p);  
 }
 
 static pfnNcApiWesStatusCallback NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus * p)
 {
-  if(instances[n]->wes_status_callback)
+  if(instances[n]->wes_status_callback != 0)
     instances[n]->wes_status_callback(n, p);  
 }
 

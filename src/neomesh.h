@@ -30,6 +30,13 @@
 
 #define DEFAULT_NEOCORTEC_BAUDRATE 115200
 
+#define SAPI_COMMAND_HEAD 0x3E
+#define SAPI_COMMAND_TAIL 0x21
+#define SAPI_COMMAND_LOGIN1 0x01
+#define SAPI_COMMAND_LOGIN2 0x03
+
+#define SAPI_LOGIN_COMMAND_LENGTH 10
+
 #if defined(UBRRH) || defined(UBRR0H)
   extern HardwareSerial Serial;
   #define HAVE_HWSERIAL0
@@ -137,13 +144,13 @@ public:
    */
   void send_wes_respond(uint64_t uid, uint16_t nodeId);
 
-  pfnNcApiReadCallback read_callback;
-  pfnNcApiHostAckCallback host_ack_callback;
-  pfnNcApiHostAckCallback host_nack_callback;
-  pfnNcApiHostDataCallback host_data_callback;
-  pfnNcApiHostDataHapaCallback host_data_hapa_callback;
-  pfnNcApiWesSetupRequestCallback wes_setup_request_callback;
-  pfnNcApiWesStatusCallback wes_status_callback;
+  pfnNcApiReadCallback read_callback = 0;
+  pfnNcApiHostAckCallback host_ack_callback = 0;
+  pfnNcApiHostAckCallback host_nack_callback = 0;
+  pfnNcApiHostDataCallback host_data_callback = 0;
+  pfnNcApiHostDataHapaCallback host_data_hapa_callback = 0;
+  pfnNcApiWesSetupRequestCallback wes_setup_request_callback = 0;
+  pfnNcApiWesStatusCallback wes_status_callback = 0;
 
   // IGNORE:
   void message_written();
@@ -158,7 +165,13 @@ private:
   uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
   HardwareSerial * serial;
 
+  bool _message_written = false;
+
+  void wait_for_message_written();
   void switch_sapi_aapi();
+  void login_sapi();
+  void change_node_id_sapi(uint16_t nodeid);
+  void write_raw(uint8_t * data, uint8_t length);
 
   static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t * msg, uint8_t msgLength);
   static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack * p);
