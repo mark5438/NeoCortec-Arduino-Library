@@ -2,7 +2,7 @@
 
 Communicate over a NeoMesh network using an Arduino an this super user friendly library.
 
-<a href="class_neo_mesh.html">See NeoMesh class</a>
+<a href="https://www.markusrytter.com/NeoCortecArduinoLibraryDocs/class_neo_mesh.html">See NeoMesh class</a>
 
 ## Example usage
 
