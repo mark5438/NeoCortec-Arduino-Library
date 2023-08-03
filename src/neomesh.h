@@ -21,7 +21,7 @@
 
 #include <HardwareSerial.h>
 #include <Arduino.h>
-#include "NcApi.h"
+#include "NcApi/NcApi.h"
 
 
 /*******************************************************************************
