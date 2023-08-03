@@ -1,5 +1,7 @@
 #include "neomesh.h"
 
+#include "SAPIParser.h"
+
 const int number_of_uarts = 0
 #ifdef HAVE_HWSERIAL0
                             + 1
@@ -49,6 +51,7 @@ NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
 void NeoMesh::start()
 {
     this->serial->begin(this->baudrate);
+    this->sapi_parser = new SAPIParser(this->uart_num);
 
     tNcApiRxHandlers *rxHandlers = &ncRx;
     memset(rxHandlers, 0, sizeof(tNcApiRxHandlers));
@@ -69,19 +72,12 @@ void NeoMesh::start()
 
 void NeoMesh::update()
 {
-    bool avb = this->serial->available();
-    if (avb)
-        Serial.print("<---  ");
     while (this->serial->available())
     {
         char c = this->serial->read();
-        char str[8];
-        sprintf(str, "0x%2X ", c);
-        Serial.print(str);
         NcApiRxData(this->uart_num, c);
+        this->sapi_parser->push_char(c);
     }
-    if (avb)
-        Serial.println();
 }
 
 void NeoMesh::write(uint8_t *finalMsg, uint8_t finalMsgLength)
@@ -93,30 +89,49 @@ void NeoMesh::change_node_id(uint16_t node_id)
 {
     uint8_t new_node_id[2] = {
         node_id >> 8,
-        node_id};
+        node_id
+    };
+
+    tNcSapiMessage message;
 
     this->switch_sapi_aapi();
-    /*this->wait_for_message_written();
-    delay(2000);
-    this->update();
-    this->login_sapi();
-    delay(2000);
-    this->update();
-    this->get_setting(NODE_ID_SETTING);
-    delay(2000);
-    this->update();
-    this->set_setting(NODE_ID_SETTING, new_node_id, 2);
-    delay(2000);
-    this->update();
-    this->commit_settings();
-    delay(2000);
-    this->update();
-    this->get_setting(NODE_ID_SETTING);
-    delay(2000);
-    this->update();
-    this->start_protocol_stack();*/
 
-    // TODO: Get rid of all delays. Wait for responses and check that they are OK
+    bool response = this->wait_for_sapi_response(&message, 250);
+
+    if(!response)
+        Serial.println("Timeout");
+
+    if(response && message.command == BootloaderStarted)
+    {
+        this->login_sapi();
+        response = this->wait_for_sapi_response(&message, 250);
+        if(response && message.command == LoginOK)
+        {
+            this->set_setting(NODE_ID_SETTING, new_node_id, 2);
+            this->wait_for_sapi_response(&message, 250);
+            this->commit_settings();
+            this->wait_for_sapi_response(&message, 250);
+        }
+        else if(response && message.command == LoginError)
+        {
+            // Error logging in
+            Serial.println("Error1");
+        }
+        else
+        {
+            // Unknown error
+            Serial.println("Error2");
+        }
+    }
+    else
+    {
+        // Error
+        Serial.println("Error3");
+    }
+
+    this->start_protocol_stack();
+    this->wait_for_sapi_response(&message, 250);
+    this->wait_for_sapi_response(&message, 250);
 }
 
 void NeoMesh::change_network_id(uint8_t network_id[16])
@@ -240,15 +255,12 @@ uint8_t NeoMesh::commit_settings()
 
 bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms)
 {
-    uint64_t start = millis();
-    uint64_t end = start + timeout_ms;
+    // TODO: Return false after timeout
     while(!this->sapi_parser->message_available())  // TODO: Create for function to wait for message with timeout
     {
-        if(millis() - start >= end)
-            return false;
         this->update();
     }
-    message* = this->sapi_parser->get_pending_message();
+    *message = this->sapi_parser->get_pending_message();
     return true;
 }
 
@@ -283,10 +295,11 @@ void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payl
     args.msg.payload = payload;
     args.msg.payloadLength = payloadLen;
     args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendAcknowledged(1, &args);
+    apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        ; // Application specific
+        Serial.print("Error sending acknowledged message: ");
+        Serial.println(apiStatus);
     }
 }
 
@@ -361,6 +374,7 @@ static void NeoMesh::pass_through_cts0()
 static void NeoMesh::pass_through_cts1()
 {
     NcApiCtsActive(1);
+    Serial.print("CTS");
 }
 
 static void NeoMesh::pass_through_cts2()
@@ -375,14 +389,6 @@ static void NeoMesh::pass_through_cts3()
 
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
 {
-    char str[8];
-    Serial.print("--->  ");
-    for (int i = 0; i < finalMsgLength; i++)
-    {
-        sprintf(str, "0x%x ", finalMsg[i]);
-        Serial.print(str);
-    }
-    Serial.println();
     instances[n]->write(finalMsg, finalMsgLength);
 }
 

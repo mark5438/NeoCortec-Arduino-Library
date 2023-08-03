@@ -179,11 +179,10 @@ private:
     SAPIParser * sapi_parser;
     bool sapi_active = false;       // If true, the module is in bootloader mode
 
-    void wait_for_message_written();
     void switch_sapi_aapi();
     void login_sapi();
     void change_node_id_sapi(uint16_t nodeid);
-    void write_raw(uint8_t *data, uint8_t length);+
+    void write_raw(uint8_t *data, uint8_t length);
     bool wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms);
     void start_bootloader();
     void start_protocol_stack();
