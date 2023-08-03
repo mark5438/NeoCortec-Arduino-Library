@@ -1,5 +1,10 @@
 #include "SAPIParser.h"
 
+SAPIParser::SAPIParser(uint8_t n)
+{
+    this->n = n;
+}
+
 void SAPIParser::push_char(uint8_t c)
 {
     if(this->cursor == 0 && c != SAPI_COMMAND_HEADER)
@@ -44,5 +49,5 @@ void SAPIParser::parse_message()
     }
 
     if(this->message_callback != 0)
-        this->message_callback(cmd2, data, data_length);
+        this->message_callback(this->n, cmd2, data, data_length);
 }
