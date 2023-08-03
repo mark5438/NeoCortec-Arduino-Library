@@ -136,7 +136,6 @@ void NcApiRxData(uint8_t n, uint8_t byte)
 	api->rxPosition = 0;
 }
 
-#include <Arduino.h>
 void NcApiExecuteCallbacks(uint8_t n, uint8_t * msg, uint8_t msgLength)
 {
 	tNcApiRxHandlers * handlers;
