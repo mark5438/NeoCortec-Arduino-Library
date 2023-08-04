@@ -17,7 +17,7 @@ void setup()
   neo->start();
   neo->change_node_id(0x21);
   Serial.println("Exiting setup");
-
+  delay(5000);
   last = millis();
 }
 

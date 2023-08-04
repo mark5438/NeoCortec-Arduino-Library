@@ -104,13 +104,19 @@ void NeoMesh::change_node_id(uint16_t node_id)
         node_id >> 8,
         node_id
     };
+    this->change_setting(NODE_ID_SETTING, new_node_id, 2);
+}
 
+void NeoMesh::change_network_id(uint8_t network_id[16])
+{
+    this->change_setting(NETWORK_ID_SETTING, network_id, 16);
+}
+
+void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
+{
     tNcSapiMessage message;
-
     this->switch_sapi_aapi();
-
     bool response = this->wait_for_sapi_response(&message, 250);
-
     if(!response)
         Serial.println("Timeout");
 
@@ -120,7 +126,7 @@ void NeoMesh::change_node_id(uint16_t node_id)
         response = this->wait_for_sapi_response(&message, 250);
         if(response && message.command == LoginOK)
         {
-            this->set_setting(NODE_ID_SETTING, new_node_id, 2);
+            this->set_setting(setting, value, length);
             this->wait_for_sapi_response(&message, 250);
             this->commit_settings();
             this->wait_for_sapi_response(&message, 250);
@@ -145,17 +151,6 @@ void NeoMesh::change_node_id(uint16_t node_id)
     this->start_protocol_stack();
     this->wait_for_sapi_response(&message, 250);
     this->wait_for_sapi_response(&message, 250);
-}
-
-void NeoMesh::change_network_id(uint8_t network_id[16])
-{
-    this->switch_sapi_aapi();
-
-    // Send login command
-
-    // Change network ID
-
-    // Reboot device
 }
 
 void NeoMesh::message_written()

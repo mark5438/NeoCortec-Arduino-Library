@@ -46,6 +46,7 @@
 #define SAPI_COMMAND_START_PROTOCOL2 0x12
 
 #define NODE_ID_SETTING 0xA
+#define NETWORK_ID_SETTING 0x2A
 
 #define DEFAULT_PASSWORD_LVL10 {0x4c, 0x76, 0x6c, 0x31, 0x30}
 
@@ -195,6 +196,7 @@ private:
     uint8_t commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
     void set_password(uint8_t new_password[5]);
+    void change_setting(uint8_t setting, uint8_t * value, uint8_t length);
 
     static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
     static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);
