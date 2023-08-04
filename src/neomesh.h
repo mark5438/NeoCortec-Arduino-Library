@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file neomesh.h
+ * @file NeoMesh.h
  * @date 2023-08-03
  * @author Markus Rytter (markus.r@live.dk)
  *

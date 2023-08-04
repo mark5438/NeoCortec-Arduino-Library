@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file neomesh.cpp
+ * @file NeoMesh.cpp
  * @date 2023-08-03
  * @author Markus Rytter (markus.r@live.dk)
  *
@@ -16,7 +16,7 @@
  *    Private Includes
  ******************************************************************************/
 
-#include "neomesh.h"
+#include "NeoMesh.h"
 
 #include "SAPIParser.h"
 
