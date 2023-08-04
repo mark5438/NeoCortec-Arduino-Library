@@ -79,7 +79,7 @@ public:
     tNcSapiMessage get_pending_message();
 
 private:
-    uint8_t buffer[32];
+    uint8_t buffer[64];
     tNcSapiMessage pending_message;
     bool is_message_pending = false;
     int cursor = 0;

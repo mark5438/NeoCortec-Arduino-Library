@@ -67,8 +67,20 @@ void SAPIParser::check_for_message()
     }
     else
     {
+        // The last byte of the message did not match the tail
+        for(int i = 0; i < this->cursor; i++)
+        {
+            // Check if another command header is present within the buffer
+            if(this->buffer[i] == SAPI_COMMAND_HEADER)
+            {
+                // Another command header is present in the buffer at position i
+                // Shift all elements i to the left, so the command header will be at index 0
+                for(int j = i, k = 0; j < this->cursor; j++, k++)
+                    this->buffer[k] = this->buffer[j];
+                break;
+            }
+        }
         this->cursor = 0;   // Ignore message
-                            // TODO: Check if buffer contains SAPI_COMMAND_HEADER later on. Then shift
     }
 }
 
