@@ -99,19 +99,12 @@ void NeoMesh::start()
 void NeoMesh::update()
 {
     bool avb = this->serial->available();
-    if(avb)
-        Serial.print("<--- ");
     while (this->serial->available())
     {
         char c = this->serial->read();
-        char str[32];
-        sprintf(str, "0x%X ", c);
-        Serial.print(str);
         NcApiRxData(this->uart_num, c);
         this->sapi_parser.push_char(c);
     }
-    if(avb)
-        Serial.println();
 }
 
 void NeoMesh::set_password(uint8_t new_password[5])
@@ -154,7 +147,7 @@ void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t ap
     args.msg.payload = payload;
     args.msg.payloadLength = payloadLen;
     args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendUnacknowledged(0, &args);
+    apiStatus = NcApiSendUnacknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
         ; // Application specific
@@ -173,8 +166,7 @@ void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payl
     apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        Serial.print("Error sending acknowledged message: ");
-        Serial.println(apiStatus);
+        
     }
 }
 
@@ -183,7 +175,7 @@ void NeoMesh::send_wes_command(NcApiWesCmdValues cmd)
     tNcApiWesCmdParams args;
     args.msg.cmd = cmd;
     args.callbackToken = &g_ncApi;
-    NcApiSendWesCmd(0, &args);
+    NcApiSendWesCmd(this->uart_num, &args);
 }
 
 void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
@@ -196,7 +188,7 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
     args.msg.uid[4] = uid & 0xff;
     args.msg.nodeId = nodeId;
     args.callbackToken = &g_ncApi;
-    NcApiSendWesResponse(0, &args);
+    NcApiSendWesResponse(this->uart_num, &args);
 }
 
 
@@ -209,8 +201,6 @@ void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
     tNcSapiMessage message;
     this->switch_sapi_aapi();
     bool response = this->wait_for_sapi_response(&message, 250);
-    if(!response)
-        Serial.println("Timeout");
 
     if(response && message.command == BootloaderStarted)
     {
@@ -226,18 +216,15 @@ void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
         else if(response && message.command == LoginError)
         {
             // Error logging in
-            Serial.println("Error1");
         }
         else
         {
             // Unknown error
-            Serial.println("Error2");
         }
     }
     else
     {
         // Error
-        Serial.println("Error3");
     }
 
     this->start_protocol_stack();
@@ -247,8 +234,6 @@ void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
 
 void NeoMesh::switch_sapi_aapi()
 {
-    Serial.println("Switching SAPI to AAPI");
-
     uint8_t cmd = 0x0B;
     this->write_raw(&cmd, 1);
 }
@@ -383,7 +368,6 @@ static void NeoMesh::pass_through_cts0()
 static void NeoMesh::pass_through_cts1()
 {
     NcApiCtsActive(1);
-    Serial.println("CTS");
 }
 
 static void NeoMesh::pass_through_cts2()
@@ -399,14 +383,6 @@ static void NeoMesh::pass_through_cts3()
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
 {
     instances[n]->write(finalMsg, finalMsgLength);
-    Serial.print("---> ");
-    for(int i = 0; i < finalMsgLength; i++)
-    {
-        char str[32];
-        sprintf(str, "0x%X ", finalMsg[i]);
-        Serial.print(str);
-    }
-    Serial.println();
 }
 
 void NcApiSupportMessageReceived(uint8_t n, void *callbackToken, uint8_t *msg, uint8_t msgLength)
