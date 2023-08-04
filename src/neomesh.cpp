@@ -88,6 +88,11 @@ void NeoMesh::update()
         Serial.println();
 }
 
+void NeoMesh::set_password(uint8_t new_password[5])
+{
+    strncpy(this->password, new_password, 5);
+}
+
 void NeoMesh::write(uint8_t *finalMsg, uint8_t finalMsgLength)
 {
     this->serial->write(finalMsg, finalMsgLength);

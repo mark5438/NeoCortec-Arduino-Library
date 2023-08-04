@@ -47,6 +47,8 @@
 
 #define NODE_ID_SETTING 0xA
 
+#define DEFAULT_PASSWORD_LVL10 {0x4c, 0x76, 0x6c, 0x31, 0x30}
+
 #if defined(UBRRH) || defined(UBRR0H)
 extern HardwareSerial Serial;
 #define HAVE_HWSERIAL0
@@ -179,7 +181,7 @@ private:
     SAPIParser * sapi_parser;
     bool sapi_active = false;       // If true, the module is in bootloader mode
 
-    uint8_t password[5] = {0x4c, 0x76, 0x6c, 0x31, 0x30}; // TODO: Create setter function
+    uint8_t password[5] = DEFAULT_PASSWORD_LVL10; // TODO: Create setter function
 
     void switch_sapi_aapi();
     void login_sapi(uint8_t * password);
@@ -192,6 +194,7 @@ private:
     uint8_t set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
     uint8_t commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
+    void set_password(uint8_t new_password[5]);
 
     static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
     static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);
