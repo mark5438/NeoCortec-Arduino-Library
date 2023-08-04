@@ -174,7 +174,7 @@ private:
     uint8_t uart_num;
     uint8_t cts_pin;
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
-    HardwareSerial * serial;
+    Serial_ * serial;
 
     SAPIParser sapi_parser;
 
@@ -187,20 +187,20 @@ private:
     bool wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms);
     void start_bootloader();
     void start_protocol_stack();
-    uint8_t get_setting(uint8_t setting);
-    uint8_t set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
-    uint8_t commit_settings();
+    void get_setting(uint8_t setting);  // TODO: Doesn't get anything. Just requests
+    void set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
+    void commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
     void set_password(uint8_t new_password[5]);
     void change_setting(uint8_t setting, uint8_t * value, uint8_t length);
 
-    static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
-    static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);
-    static pfnNcApiHostAckCallback host_nack_callback_(uint8_t n, tNcApiHostAckNack *p);
-    static pfnNcApiHostDataCallback host_data_callback_(uint8_t n, tNcApiHostData *m);
-    static pfnNcApiHostDataHapaCallback host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa *p);
-    static pfnNcApiWesSetupRequestCallback wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest *p);
-    static pfnNcApiWesStatusCallback wes_status_callback_(uint8_t n, tNcApiWesStatus *p);
+    static void read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
+    static void host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);
+    static void host_nack_callback_(uint8_t n, tNcApiHostAckNack *p);
+    static void host_data_callback_(uint8_t n, tNcApiHostData *m);
+    static void host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa *p);
+    static void wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest *p);
+    static void wes_status_callback_(uint8_t n, tNcApiWesStatus *p);
 };
 
 /*******************************************************************************/
