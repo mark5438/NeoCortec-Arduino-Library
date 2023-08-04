@@ -1,6 +1,29 @@
+/*******************************************************************************
+ * @file neomesh.cpp
+ * @date 2023-08-03
+ * @author Markus Rytter (markus.r@live.dk)
+ *
+ * @copyright Copyright (c) 2023
+ *
+ ******************************************************************************/
+
+/**
+ * @addtogroup NeoMesh
+ * @{
+ */
+
+/*******************************************************************************
+ *    Private Includes
+ ******************************************************************************/
+
 #include "neomesh.h"
 
 #include "SAPIParser.h"
+
+
+/*******************************************************************************
+ *    Private Defines
+ ******************************************************************************/
 
 const int number_of_uarts = 0
 #ifdef HAVE_HWSERIAL0
@@ -22,6 +45,10 @@ NeoMesh *instances[number_of_uarts];
 tNcApi g_ncApi[number_of_uarts];
 uint8_t g_numberOfNcApis = number_of_uarts;
 tNcApiRxHandlers ncRx;
+
+/*******************************************************************************
+ *    Public Class/Functions
+ ******************************************************************************/
 
 NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
 {
@@ -111,6 +138,72 @@ void NeoMesh::change_network_id(uint8_t network_id[16])
     this->change_setting(NETWORK_ID_SETTING, network_id, 16);
 }
 
+
+void NeoMesh::set_baudrate(uint32_t baudrate)
+{
+    this->baudrate = baudrate;
+}
+
+void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t appSeqNo, uint8_t *payload, uint8_t payloadLen)
+{
+    tNcApiSendUnackParams args;
+    NcApiErrorCodes apiStatus;
+    args.msg.destNodeId = destNodeId;
+    args.msg.destPort = port;
+    args.msg.appSeqNo = appSeqNo;
+    args.msg.payload = payload;
+    args.msg.payloadLength = payloadLen;
+    args.callbackToken = &g_ncApi;
+    apiStatus = NcApiSendUnacknowledged(0, &args);
+    if (apiStatus != NCAPI_OK)
+    {
+        ; // Application specific
+    }
+}
+
+void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payload, uint8_t payloadLen)
+{
+    tNcApiSendAckParams args;
+    NcApiErrorCodes apiStatus;
+    args.msg.destNodeId = destNodeId;
+    args.msg.destPort = port;
+    args.msg.payload = payload;
+    args.msg.payloadLength = payloadLen;
+    args.callbackToken = &g_ncApi;
+    apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
+    if (apiStatus != NCAPI_OK)
+    {
+        Serial.print("Error sending acknowledged message: ");
+        Serial.println(apiStatus);
+    }
+}
+
+void NeoMesh::send_wes_command(NcApiWesCmdValues cmd)
+{
+    tNcApiWesCmdParams args;
+    args.msg.cmd = cmd;
+    args.callbackToken = &g_ncApi;
+    NcApiSendWesCmd(0, &args);
+}
+
+void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
+{
+    tNcApiWesResponseParams args;
+    args.msg.uid[0] = (uid >> 32) & 0xff;
+    args.msg.uid[1] = (uid >> 24) & 0xff;
+    args.msg.uid[2] = (uid >> 16) & 0xff;
+    args.msg.uid[3] = (uid >> 8) & 0xff;
+    args.msg.uid[4] = uid & 0xff;
+    args.msg.nodeId = nodeId;
+    args.callbackToken = &g_ncApi;
+    NcApiSendWesResponse(0, &args);
+}
+
+
+/*******************************************************************************
+ *    Private Class/Functions
+ ******************************************************************************/
+
 void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
 {
     tNcSapiMessage message;
@@ -150,11 +243,6 @@ void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
     this->start_protocol_stack();
     this->wait_for_sapi_response(&message, 250);
     this->wait_for_sapi_response(&message, 250);
-}
-
-void NeoMesh::message_written()
-{
-    this->_message_written = true;
 }
 
 void NeoMesh::switch_sapi_aapi()
@@ -245,66 +333,6 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_
     return true;
 }
 
-void NeoMesh::set_baudrate(uint32_t baudrate)
-{
-    this->baudrate = baudrate;
-}
-
-void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t appSeqNo, uint8_t *payload, uint8_t payloadLen)
-{
-    tNcApiSendUnackParams args;
-    NcApiErrorCodes apiStatus;
-    args.msg.destNodeId = destNodeId;
-    args.msg.destPort = port;
-    args.msg.appSeqNo = appSeqNo;
-    args.msg.payload = payload;
-    args.msg.payloadLength = payloadLen;
-    args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendUnacknowledged(0, &args);
-    if (apiStatus != NCAPI_OK)
-    {
-        ; // Application specific
-    }
-}
-
-void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payload, uint8_t payloadLen)
-{
-    tNcApiSendAckParams args;
-    NcApiErrorCodes apiStatus;
-    args.msg.destNodeId = destNodeId;
-    args.msg.destPort = port;
-    args.msg.payload = payload;
-    args.msg.payloadLength = payloadLen;
-    args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
-    if (apiStatus != NCAPI_OK)
-    {
-        Serial.print("Error sending acknowledged message: ");
-        Serial.println(apiStatus);
-    }
-}
-
-void NeoMesh::send_wes_command(NcApiWesCmdValues cmd)
-{
-    tNcApiWesCmdParams args;
-    args.msg.cmd = cmd;
-    args.callbackToken = &g_ncApi;
-    NcApiSendWesCmd(0, &args);
-}
-
-void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
-{
-    tNcApiWesResponseParams args;
-    args.msg.uid[0] = (uid >> 32) & 0xff;
-    args.msg.uid[1] = (uid >> 24) & 0xff;
-    args.msg.uid[2] = (uid >> 16) & 0xff;
-    args.msg.uid[3] = (uid >> 8) & 0xff;
-    args.msg.uid[4] = uid & 0xff;
-    args.msg.nodeId = nodeId;
-    args.callbackToken = &g_ncApi;
-    NcApiSendWesResponse(0, &args);
-}
-
 static pfnNcApiReadCallback NeoMesh::read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength)
 {
     if (instances[n]->read_callback != 0)
@@ -388,6 +416,11 @@ void NcApiSupportMessageReceived(uint8_t n, void *callbackToken, uint8_t *msg, u
 
 void NcApiSupportMessageWritten(uint8_t n, void *callbackToken, uint8_t *finalMsg, uint8_t finalMsgLength)
 {
-    NeoMesh *neo = (NeoMesh *)callbackToken;
-    neo->message_written();
+    // NeoMesh *neo = (NeoMesh *)callbackToken;
+    // neo->message_written();
+    // TODO: Eventually a callback needs to go all the way to the application
 }
+
+/*******************************************************************************/
+
+/** @} addtogroup end */

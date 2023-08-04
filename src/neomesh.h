@@ -165,7 +165,6 @@ public:
     pfnNcApiWesStatusCallback wes_status_callback = 0;
 
     // IGNORE:
-    void message_written();
     static void pass_through_cts0();
     static void pass_through_cts1();
     static void pass_through_cts2();
@@ -177,8 +176,6 @@ private:
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
     HardwareSerial * serial;
 
-    bool _message_written = false;
-    
     SAPIParser sapi_parser;
 
     uint8_t password[5] = DEFAULT_PASSWORD_LVL10; // TODO: Create setter function
