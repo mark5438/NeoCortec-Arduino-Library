@@ -304,7 +304,7 @@ void NeoMesh::write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uin
     cmd[4 + data_length] = SAPI_COMMAND_TAIL;
 
     this->write_raw(cmd, 5 + data_length);
-    NcApiCtsActive(this->uart_num); // TODO: better    
+    NcApiCtsActive(this->uart_num);  
 }
 
 void NeoMesh::write_raw(uint8_t *data, uint8_t length)
@@ -322,7 +322,7 @@ void NeoMesh::write_raw(uint8_t *data, uint8_t length)
     NcApiSendRaw(this->uart_num, &params);
 }
 
-bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms)
+bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms)
 {
     // TODO: Return false after timeout
     while(!this->sapi_parser.message_available())  // TODO: Create for function to wait for message with timeout
