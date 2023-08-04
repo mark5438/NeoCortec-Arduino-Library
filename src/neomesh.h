@@ -179,8 +179,7 @@ private:
 
     bool _message_written = false;
     
-    SAPIParser * sapi_parser;
-    bool sapi_active = false;       // If true, the module is in bootloader mode
+    SAPIParser sapi_parser;
 
     uint8_t password[5] = DEFAULT_PASSWORD_LVL10; // TODO: Create setter function
 

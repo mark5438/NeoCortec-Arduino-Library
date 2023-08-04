@@ -6,11 +6,6 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
-SAPIParser::SAPIParser(uint8_t n)
-{
-    this->n = n;
-}
-
 void SAPIParser::push_char(uint8_t c)
 {
     if(this->cursor == 0 && c != SAPI_COMMAND_HEADER)

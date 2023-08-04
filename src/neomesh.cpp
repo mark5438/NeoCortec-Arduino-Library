@@ -51,7 +51,6 @@ NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
 void NeoMesh::start()
 {
     this->serial->begin(this->baudrate);
-    this->sapi_parser = new SAPIParser(this->uart_num);
 
     tNcApiRxHandlers *rxHandlers = &ncRx;
     memset(rxHandlers, 0, sizeof(tNcApiRxHandlers));
@@ -82,7 +81,7 @@ void NeoMesh::update()
         sprintf(str, "0x%X ", c);
         Serial.print(str);
         NcApiRxData(this->uart_num, c);
-        this->sapi_parser->push_char(c);
+        this->sapi_parser.push_char(c);
     }
     if(avb)
         Serial.println();
@@ -238,11 +237,11 @@ void NeoMesh::write_raw(uint8_t *data, uint8_t length)
 bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms)
 {
     // TODO: Return false after timeout
-    while(!this->sapi_parser->message_available())  // TODO: Create for function to wait for message with timeout
+    while(!this->sapi_parser.message_available())  // TODO: Create for function to wait for message with timeout
     {
         this->update();
     }
-    *message = this->sapi_parser->get_pending_message();
+    *message = this->sapi_parser.get_pending_message();
     return true;
 }
 
