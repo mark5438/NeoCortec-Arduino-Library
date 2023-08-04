@@ -179,8 +179,10 @@ private:
     SAPIParser * sapi_parser;
     bool sapi_active = false;       // If true, the module is in bootloader mode
 
+    uint8_t password[5] = {0x4c, 0x76, 0x6c, 0x31, 0x30}; // TODO: Create setter function
+
     void switch_sapi_aapi();
-    void login_sapi();
+    void login_sapi(uint8_t * password);
     void change_node_id_sapi(uint16_t nodeid);
     void write_raw(uint8_t *data, uint8_t length);
     bool wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms);
@@ -189,6 +191,7 @@ private:
     uint8_t get_setting(uint8_t setting);
     uint8_t set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
     uint8_t commit_settings();
+    void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
 
     static pfnNcApiReadCallback read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
     static pfnNcApiHostAckCallback host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);

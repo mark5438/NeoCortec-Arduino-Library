@@ -72,12 +72,20 @@ void NeoMesh::start()
 
 void NeoMesh::update()
 {
+    bool avb = this->serial->available();
+    if(avb)
+        Serial.print("<--- ");
     while (this->serial->available())
     {
         char c = this->serial->read();
+        char str[32];
+        sprintf(str, "0x%X ", c);
+        Serial.print(str);
         NcApiRxData(this->uart_num, c);
         this->sapi_parser->push_char(c);
     }
+    if(avb)
+        Serial.println();
 }
 
 void NeoMesh::write(uint8_t *finalMsg, uint8_t finalMsgLength)
@@ -103,7 +111,7 @@ void NeoMesh::change_node_id(uint16_t node_id)
 
     if(response && message.command == BootloaderStarted)
     {
-        this->login_sapi();
+        this->login_sapi(this->password);
         response = this->wait_for_sapi_response(&message, 250);
         if(response && message.command == LoginOK)
         {
@@ -158,40 +166,58 @@ void NeoMesh::switch_sapi_aapi()
     this->write_raw(&cmd, 1);
 }
 
-void NeoMesh::login_sapi()
+void NeoMesh::login_sapi(uint8_t * password)
 {
-    uint8_t login_cmd[10] = {SAPI_COMMAND_HEAD,
-                             8,
-                             SAPI_COMMAND_LOGIN1,
-                             SAPI_COMMAND_LOGIN2,
-                             0x4c, 0x76, 0x6c, 0x31, 0x30, //  PASSWORD TODO: Take from argument
-                             SAPI_COMMAND_TAIL};
-    this->write_raw(login_cmd, 10);
-    NcApiCtsActive(this->uart_num); // TODO: better
+    this->write_sapi_command(SAPI_COMMAND_LOGIN1, SAPI_COMMAND_LOGIN2, password, 5);
 }
 
 void NeoMesh::start_bootloader()
 {
-    uint8_t start_bootloader_cmd[5] = {
-        SAPI_COMMAND_HEAD,
-        3,
-        SAPI_COMMAND_START_BOOTLOADER1,
-        SAPI_COMMAND_START_BOOTLOADER2,
-        SAPI_COMMAND_TAIL};
-    this->write_raw(start_bootloader_cmd, 5);
-    NcApiCtsActive(this->uart_num); // TODO: better
+    this->write_sapi_command(SAPI_COMMAND_START_BOOTLOADER1, SAPI_COMMAND_START_BOOTLOADER2, nullptr, 0);
 }
 
 void NeoMesh::start_protocol_stack()
 {
-    uint8_t start_protocol_cmd[5] = {
+    this->write_sapi_command(SAPI_COMMAND_START_PROTOCOL1, SAPI_COMMAND_START_PROTOCOL2, nullptr, 0);
+}
+
+uint8_t NeoMesh::get_setting(uint8_t setting)
+{
+    this->write_sapi_command(SAPI_COMMAND_GET_SETTING_FLASH1, SAPI_COMMAND_GET_SETTING_FLASH2, &setting, 1);
+}
+
+uint8_t NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length)
+{
+    uint8_t data[setting_value_length + 1];
+    data[0] = setting;
+    for (int i = 0; i < setting_value_length; i++)
+    {
+        data[i + 1] = setting_value[i];
+    }
+    this->write_sapi_command(SAPI_COMMAND_SET_SETTING1, SAPI_COMMAND_SET_SETTING2, data, setting_value_length + 1);
+}
+
+uint8_t NeoMesh::commit_settings()
+{
+    this->write_sapi_command(SAPI_COMMAND_COMMIT_SETTINGS1, SAPI_COMMAND_COMMIT_SETTINGS2, nullptr, 0);
+}
+
+void NeoMesh::write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length)
+{
+    uint8_t cmd[5 + data_length] = {
         SAPI_COMMAND_HEAD,
-        3,
-        SAPI_COMMAND_START_PROTOCOL1,
-        SAPI_COMMAND_START_PROTOCOL2,
-        SAPI_COMMAND_TAIL};
-    this->write_raw(start_protocol_cmd, 5);
-    NcApiCtsActive(this->uart_num); // TODO: better
+        3 + data_length,
+        cmd1,
+        cmd2,
+    };
+    for(int i = 0; i < data_length; i++)
+    {
+        cmd[4 + i] = data[i];
+    }
+    cmd[4 + data_length] = SAPI_COMMAND_TAIL;
+
+    this->write_raw(cmd, 5 + data_length);
+    NcApiCtsActive(this->uart_num); // TODO: better    
 }
 
 void NeoMesh::write_raw(uint8_t *data, uint8_t length)
@@ -207,50 +233,6 @@ void NeoMesh::write_raw(uint8_t *data, uint8_t length)
         .callbackToken = this};
 
     NcApiSendRaw(this->uart_num, &params);
-}
-
-void NeoMesh::change_node_id_sapi(uint16_t nodeid)
-{
-}
-
-uint8_t NeoMesh::get_setting(uint8_t setting)
-{
-    uint8_t setting_cmd[6] = {SAPI_COMMAND_HEAD,
-                              4,
-                              SAPI_COMMAND_GET_SETTING_FLASH1,
-                              SAPI_COMMAND_GET_SETTING_FLASH2,
-                              setting,
-                              SAPI_COMMAND_TAIL};
-    this->write_raw(setting_cmd, 6);
-    NcApiCtsActive(this->uart_num); // TODO: better
-}
-
-uint8_t NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length)
-{
-    uint8_t setting_cmd[6 + setting_value_length] = {SAPI_COMMAND_HEAD,
-                                                     4 + setting_value_length,
-                                                     SAPI_COMMAND_SET_SETTING1,
-                                                     SAPI_COMMAND_SET_SETTING2,
-                                                     setting};
-    for (int i = 5; i < 5 + setting_value_length; i++)
-    {
-        setting_cmd[i] = setting_value[i - 5];
-    }
-    setting_cmd[5 + setting_value_length] = SAPI_COMMAND_TAIL;
-
-    this->write_raw(setting_cmd, 6 + setting_value_length);
-    NcApiCtsActive(this->uart_num); // TODO: better
-}
-
-uint8_t NeoMesh::commit_settings()
-{
-    uint8_t commit_cmd[5] = {SAPI_COMMAND_HEAD,
-                             3,
-                             SAPI_COMMAND_COMMIT_SETTINGS1,
-                             SAPI_COMMAND_COMMIT_SETTINGS2,
-                             SAPI_COMMAND_TAIL};
-    this->write_raw(commit_cmd, 5);
-    NcApiCtsActive(this->uart_num); // TODO: better
 }
 
 bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint16_t timeout_ms)
@@ -374,7 +356,7 @@ static void NeoMesh::pass_through_cts0()
 static void NeoMesh::pass_through_cts1()
 {
     NcApiCtsActive(1);
-    Serial.print("CTS");
+    Serial.println("CTS");
 }
 
 static void NeoMesh::pass_through_cts2()
@@ -390,6 +372,14 @@ static void NeoMesh::pass_through_cts3()
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
 {
     instances[n]->write(finalMsg, finalMsgLength);
+    Serial.print("---> ");
+    for(int i = 0; i < finalMsgLength; i++)
+    {
+        char str[32];
+        sprintf(str, "0x%X ", finalMsg[i]);
+        Serial.print(str);
+    }
+    Serial.println();
 }
 
 void NcApiSupportMessageReceived(uint8_t n, void *callbackToken, uint8_t *msg, uint8_t msgLength)
