@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * @file SAPIParser.cpp
+ * @date 2023-08-04
+ * @author Markus Rytter (markus.r@live.dk)
+ *
+ * @copyright Copyright (c) 2023
+ *
+ ******************************************************************************/
+
+/**
+ * @addtogroup NeoMesh
+ * @{
+ */
+
+/*******************************************************************************
+ *    Private Includes
+ ******************************************************************************/
+
 #include "SAPIParser.h"
 
 #include <stdio.h>
@@ -6,6 +24,10 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
+/*******************************************************************************
+ *    Public Class/Functions
+ ******************************************************************************/
+
 void SAPIParser::push_char(uint8_t c)
 {
     if(this->cursor == 0 && c != SAPI_COMMAND_HEADER)
@@ -13,6 +35,21 @@ void SAPIParser::push_char(uint8_t c)
     this->buffer[this->cursor ++] = c;
     this->check_for_message();
 }
+
+bool SAPIParser::message_available()
+{
+    return this->is_message_pending;
+}
+
+tNcSapiMessage SAPIParser::get_pending_message()
+{
+    this->is_message_pending = false;
+    return this->pending_message;
+}
+
+/*******************************************************************************
+ *    Private Class/Functions
+ ******************************************************************************/
 
 void SAPIParser::check_for_message()
 {
@@ -50,13 +87,6 @@ void SAPIParser::parse_message()
     cursor = 0;
 }
 
-bool SAPIParser::message_available()
-{
-    return this->is_message_pending;
-}
+/*******************************************************************************/
 
-tNcSapiMessage SAPIParser::get_pending_message()
-{
-    this->is_message_pending = false;
-    return this->pending_message;
-}
+/** @} addtogroup end */
