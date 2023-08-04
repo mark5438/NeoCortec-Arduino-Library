@@ -56,22 +56,30 @@ NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
     this->uart_num = uart_num;
     switch (this->uart_num)
     {
+#ifdef HAVE_HWSERIAL0
     case 0:
         this->serial = &Serial;
         attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts0, FALLING);
         break;
+#endif
+#ifdef HAVE_HWSERIAL1
     case 1:
         this->serial = &Serial1;
         attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts1, FALLING);
         break;
+#endif
+#ifdef HAVE_HWSERIAL2
     case 2:
         this->serial = &Serial2;
         attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts2, FALLING);
         break;
+#endif
+#ifdef HAVE_HWSERIAL3
     case 3:
         this->serial = &Serial3;
         attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts3, FALLING);
         break;
+#endif
     }
 }
 
@@ -116,7 +124,7 @@ void NeoMesh::update()
 
 void NeoMesh::set_password(uint8_t new_password[5])
 {
-    strncpy(this->password, new_password, 5);
+    strncpy((char *) this->password, (char *) new_password, 5);
 }
 
 void NeoMesh::write(uint8_t *finalMsg, uint8_t finalMsgLength)
@@ -268,12 +276,12 @@ void NeoMesh::start_protocol_stack()
     this->write_sapi_command(SAPI_COMMAND_START_PROTOCOL1, SAPI_COMMAND_START_PROTOCOL2, nullptr, 0);
 }
 
-uint8_t NeoMesh::get_setting(uint8_t setting)
+void NeoMesh::get_setting(uint8_t setting)
 {
     this->write_sapi_command(SAPI_COMMAND_GET_SETTING_FLASH1, SAPI_COMMAND_GET_SETTING_FLASH2, &setting, 1);
 }
 
-uint8_t NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length)
+void NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length)
 {
     uint8_t data[setting_value_length + 1];
     data[0] = setting;
@@ -284,7 +292,7 @@ uint8_t NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t se
     this->write_sapi_command(SAPI_COMMAND_SET_SETTING1, SAPI_COMMAND_SET_SETTING2, data, setting_value_length + 1);
 }
 
-uint8_t NeoMesh::commit_settings()
+void NeoMesh::commit_settings()
 {
     this->write_sapi_command(SAPI_COMMAND_COMMIT_SETTINGS1, SAPI_COMMAND_COMMIT_SETTINGS2, nullptr, 0);
 }
@@ -333,65 +341,66 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_
     return true;
 }
 
-static pfnNcApiReadCallback NeoMesh::read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength)
+void NeoMesh::read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength)
 {
     if (instances[n]->read_callback != 0)
         instances[n]->read_callback(n, msg, msgLength);
 }
 
-static pfnNcApiHostAckCallback NeoMesh::host_ack_callback_(uint8_t n, tNcApiHostAckNack *p)
+ void NeoMesh::host_ack_callback_(uint8_t n, tNcApiHostAckNack *p)
 {
     if (instances[n]->host_ack_callback != 0)
         instances[n]->host_ack_callback(n, p);
 }
 
-static pfnNcApiHostAckCallback NeoMesh::host_nack_callback_(uint8_t n, tNcApiHostAckNack *p)
+void NeoMesh::host_nack_callback_(uint8_t n, tNcApiHostAckNack *p)
 {
     if (instances[n]->host_nack_callback != 0)
         instances[n]->host_nack_callback(n, p);
 }
 
-static pfnNcApiHostDataCallback NeoMesh::host_data_callback_(uint8_t n, tNcApiHostData *m)
+void NeoMesh::host_data_callback_(uint8_t n, tNcApiHostData *m)
 {
     if (instances[n]->host_data_callback != 0)
         instances[n]->host_data_callback(n, m);
 }
 
-static pfnNcApiHostDataHapaCallback NeoMesh::host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa *p)
+void NeoMesh::host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa *p)
 {
     if (instances[n]->host_data_hapa_callback != 0)
         instances[n]->host_data_hapa_callback(n, p);
 }
 
-static pfnNcApiWesSetupRequestCallback NeoMesh::wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest *p)
+void NeoMesh::wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest *p)
 {
     if (instances[n]->wes_setup_request_callback != 0)
         instances[n]->wes_setup_request_callback(n, p);
 }
 
-static pfnNcApiWesStatusCallback NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus *p)
+void NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus *p)
 {
     if (instances[n]->wes_status_callback != 0)
         instances[n]->wes_status_callback(n, p);
+    return ;
 }
 
-static void NeoMesh::pass_through_cts0()
+void NeoMesh::pass_through_cts0()
 {
     NcApiCtsActive(0);
 }
 
-static void NeoMesh::pass_through_cts1()
+void NeoMesh::pass_through_cts1()
 {
     NcApiCtsActive(1);
     Serial.println("CTS");
 }
 
-static void NeoMesh::pass_through_cts2()
+void NeoMesh::pass_through_cts2()
 {
     NcApiCtsActive(2);
 }
 
-static void NeoMesh::pass_through_cts3()
+void NeoMesh::pass_through_cts3()
 {
     NcApiCtsActive(3);
 }
@@ -407,6 +416,7 @@ NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMs
         Serial.print(str);
     }
     Serial.println();
+    return NCAPI_OK;
 }
 
 void NcApiSupportMessageReceived(uint8_t n, void *callbackToken, uint8_t *msg, uint8_t msgLength)
