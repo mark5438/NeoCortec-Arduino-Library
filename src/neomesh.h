@@ -174,7 +174,7 @@ private:
     uint8_t uart_num;
     uint8_t cts_pin;
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
-    Serial_ * serial;
+    HardwareSerial * serial;
 
     SAPIParser sapi_parser;
 

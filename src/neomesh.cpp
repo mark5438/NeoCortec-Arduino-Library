@@ -392,6 +392,7 @@ void NeoMesh::pass_through_cts3()
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
 {
     instances[n]->write(finalMsg, finalMsgLength);
+    return NCAPI_OK;
 }
 
 void NcApiSupportMessageReceived(uint8_t n, void *callbackToken, uint8_t *msg, uint8_t msgLength)
