@@ -110,6 +110,10 @@ void NeoMesh::change_network_id(uint8_t network_id[16])
     this->change_setting(NETWORK_ID_SETTING, network_id, 16);
 }
 
+void NeoMesh::change_trace_output_setting(bool mode)
+{
+    this->change_setting(TRACE_OUTPUT_SETTING, (uint8_t*) &mode, 1);
+}
 
 void NeoMesh::set_baudrate(uint32_t baudrate)
 {

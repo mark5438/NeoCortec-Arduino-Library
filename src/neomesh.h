@@ -46,6 +46,9 @@
 
 #define NODE_ID_SETTING 0xA
 #define NETWORK_ID_SETTING 0x2A
+#define TRACE_OUTPUT_SETTING 0x2C
+#define GENERIC_APPLICATION_NORM_SETTING 0x19
+#define GENERIC_APPLICATION_ALT_SETTING 0x3A
 
 #define DEFAULT_PASSWORD_LVL10 {0x4c, 0x76, 0x6c, 0x31, 0x30}
 
@@ -97,6 +100,16 @@ public:
      * @param network_id The new network id as 16 bytes
      */
     void change_network_id(uint8_t network_id[16]);
+
+    /**
+    * @brief Change trace output setting
+    * Tracing output enables the user to see neighbors connected to the node in realtime.
+    * Of course, this comes with the cost of higher power consumption, which is why you
+    * usually only want this setting to be turned on, on gateway nodes with main power.
+    * Batterypowered sensor nodes should have this setting turned off.
+    * @param mode True if trace output should be turned on
+    */
+    void change_trace_output_setting(bool mode);
 
     /**
      * @brief Change baudrate (Must be called before start)
