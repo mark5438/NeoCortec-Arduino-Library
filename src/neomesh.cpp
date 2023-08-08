@@ -42,6 +42,8 @@ NeoMesh::NeoMesh(Stream * serial, uint8_t cts_pin)
     this->uart_num = 0;
     instances[this->uart_num] = this;
     this->serial = serial;
+
+    pinMode(cts_pin, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts0, FALLING);
 }
 

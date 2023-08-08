@@ -2,42 +2,50 @@
 
 Communicate over a NeoMesh network using an Arduino and this super user friendly library.
 
-<a href="https://www.markusrytter.com/NeoCortecArduinoLibraryDocs/class_neo_mesh.html">See NeoMesh class</a>
+## Examples
 
-## Example usage
 
+### Send acknowledged messages
 ```
-#include "neomesh.h"
+/*
+ *  This example will send a test array as an acknowledged message to a 
+ *  NeoCortec node every 5 seconds and print a message to the serial port
+ * when the recepient node has acknowledged the message
+ */
+#include <NeoMesh.h>
 
-#define PROTOCOL_UART 0
+#define RECEPIENT_NODE_ID 0x0010
 #define CTS_PIN 2
 
 NeoMesh * neo;
+uint32_t last;
 
-void data_callback(uint8_t n, tNcApiHostData * m)
+uint8_t test[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+void acknowledged(uint8_t n, tNcApiHostAckNack * m)
 {
-    uint8_t * payload     = m->payload;         // The message
-    uint8_t   payload_len = m->payloadLength;   // How long is the message
-    uint16_t  sender      = m->originId;        // Who sent the message
-
-    /*
-        Handle message
-    */
+    Serial.print("Node ");
+    Serial.print(m->originId);
+    Serial.println(" acknowledged a message");
 }
 
 void setup()
 {
-    neo = new NeoMesh(PROTOCOL_UART, CTS_PIN);
-    neo->host_data_callback = data_callback;
+    Serial1.begin(DEFAULT_NEOCORTEC_BAUDRATE);
+    neo = new NeoMesh(&Serial1, CTS_PIN);
+    neo->host_ack_callback = acknowledged;
     neo->start();
-
-    // Send a message using the NeoMesh protocol
-    uint8_t data[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    neo->send_acknowledged(0x10, 0, data, 10)
 }
 
 void loop()
 {
     neo->update();
+
+    if (millis() - last > 5000)
+    {
+        neo->send_acknowledged(RECEPIENT_NODE_ID, 0, test, 10);
+        last = millis();
+    }
+
 }
 ```
