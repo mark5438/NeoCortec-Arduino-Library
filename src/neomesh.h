@@ -18,8 +18,7 @@
 /*******************************************************************************
  *    Includes
  ******************************************************************************/
-
-#include <HardwareSerial.h>
+#include <Stream.h>
 #include <Arduino.h>
 #include "NcApi.h"
 #include "SAPIParser.h"
@@ -50,23 +49,6 @@
 
 #define DEFAULT_PASSWORD_LVL10 {0x4c, 0x76, 0x6c, 0x31, 0x30}
 
-#if defined(UBRRH) || defined(UBRR0H)
-extern HardwareSerial Serial;
-#define HAVE_HWSERIAL0
-#endif
-#if defined(UBRR1H)
-extern HardwareSerial Serial1;
-#define HAVE_HWSERIAL1
-#endif
-#if defined(UBRR2H)
-extern HardwareSerial Serial2;
-#define HAVE_HWSERIAL2
-#endif
-#if defined(UBRR3H)
-extern HardwareSerial Serial3;
-#define HAVE_HWSERIAL3
-#endif
-
 /*******************************************************************************
  *    Class prototypes
  ******************************************************************************/
@@ -80,9 +62,9 @@ public:
     /**
      * @brief Construct new NeoMesh object
      * @param uart_num Which UART is connected to the AAPI UART of the NeoCortec module
-     * @param cts_pin The GPIO connected to the cts pin of the NeoCortec module
-     */
-    NeoMesh(uint8_t uart_num, uint8_t cts_pin);
+     * @param serial Pointer to the Stream object attached to UART
+    */
+    NeoMesh(Stream * serial, uint8_t cts_pin);
 
     /**
      * @brief Starts the NeoMesh API
@@ -156,6 +138,8 @@ public:
      */
     void send_wes_respond(uint64_t uid, uint16_t nodeId);
 
+    void set_debug_serial(Stream * debug_serial);
+
     pfnNcApiReadCallback read_callback = 0;
     pfnNcApiHostAckCallback host_ack_callback = 0;
     pfnNcApiHostAckCallback host_nack_callback = 0;
@@ -174,7 +158,9 @@ private:
     uint8_t uart_num;
     uint8_t cts_pin;
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
-    HardwareSerial * serial;
+
+    Stream * serial;
+    Stream * debug_serial = 0;
 
     SAPIParser sapi_parser;
 
@@ -192,7 +178,9 @@ private:
     void commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
     void set_password(uint8_t new_password[5]);
-    void change_setting(uint8_t setting, uint8_t * value, uint8_t length);
+    bool change_setting(uint8_t setting, uint8_t * value, uint8_t length);
+
+    void write_debug(const char * str);
 
     static void read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
     static void host_ack_callback_(uint8_t n, tNcApiHostAckNack *p);

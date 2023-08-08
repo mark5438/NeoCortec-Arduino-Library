@@ -25,20 +25,7 @@
  *    Private Defines
  ******************************************************************************/
 
-const int number_of_uarts = 0
-#ifdef HAVE_HWSERIAL0
-                            + 1
-#endif
-#ifdef HAVE_HWSERIAL1
-                            + 1
-#endif
-#ifdef HAVE_HWSERIAL2
-                            + 1
-#endif
-#ifdef HAVE_HWSERIAL3
-                            + 1
-#endif
-    ;
+const int number_of_uarts = 1;
 
 NeoMesh *instances[number_of_uarts];
 
@@ -50,42 +37,17 @@ tNcApiRxHandlers ncRx;
  *    Public Class/Functions
  ******************************************************************************/
 
-NeoMesh::NeoMesh(uint8_t uart_num, uint8_t cts_pin)
+NeoMesh::NeoMesh(Stream * serial, uint8_t cts_pin)
 {
-    instances[uart_num] = this;
-    this->uart_num = uart_num;
-    switch (this->uart_num)
-    {
-#ifdef HAVE_HWSERIAL0
-    case 0:
-        this->serial = &Serial;
-        attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts0, FALLING);
-        break;
-#endif
-#ifdef HAVE_HWSERIAL1
-    case 1:
-        this->serial = &Serial1;
-        attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts1, FALLING);
-        break;
-#endif
-#ifdef HAVE_HWSERIAL2
-    case 2:
-        this->serial = &Serial2;
-        attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts2, FALLING);
-        break;
-#endif
-#ifdef HAVE_HWSERIAL3
-    case 3:
-        this->serial = &Serial3;
-        attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts3, FALLING);
-        break;
-#endif
-    }
+    this->uart_num = 0;
+    instances[this->uart_num] = this;
+    this->serial = serial;
+    attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts0, FALLING);
 }
 
 void NeoMesh::start()
 {
-    this->serial->begin(this->baudrate);
+    //this->serial->begin(this->baudrate);
 
     tNcApiRxHandlers *rxHandlers = &ncRx;
     memset(rxHandlers, 0, sizeof(tNcApiRxHandlers));
@@ -107,12 +69,21 @@ void NeoMesh::start()
 void NeoMesh::update()
 {
     bool avb = this->serial->available();
+    if(avb)
+        this->write_debug("<--- ");
     while (this->serial->available())
     {
         char c = this->serial->read();
+
+        char str[128];
+        sprintf(str, "0x%02X ", c);
+        this->write_debug(str);
+
         NcApiRxData(this->uart_num, c);
         this->sapi_parser.push_char(c);
     }
+    if(avb)
+        this->write_debug("\n");
 }
 
 void NeoMesh::set_password(uint8_t new_password[5])
@@ -158,7 +129,9 @@ void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t ap
     apiStatus = NcApiSendUnacknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        ; // Application specific
+        char errorStr[256];
+        sprintf(errorStr, "Failed to send acknowledged message. Status: %d\n", apiStatus);
+        this->write_debug(errorStr);
     }
 }
 
@@ -174,7 +147,9 @@ void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payl
     apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        
+        char errorStr[256];
+        sprintf(errorStr, "Failed to send unacknowledged message. Status: %d\n", apiStatus);
+        this->write_debug(errorStr);
     }
 }
 
@@ -199,45 +174,68 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
     NcApiSendWesResponse(this->uart_num, &args);
 }
 
+void NeoMesh::set_debug_serial(Stream * debug_serial)
+{
+    this->debug_serial = debug_serial;
+}
+
 
 /*******************************************************************************
  *    Private Class/Functions
  ******************************************************************************/
 
-void NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
+bool NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
 {
+    // TODO: when calling wait_for_sapi_response, return value should be checked
+    bool ret = true;
     tNcSapiMessage message;
+    this->write_debug("Switch SAPI AAPI\n");
     this->switch_sapi_aapi();
+    this->write_debug("Request sent\n");
     bool response = this->wait_for_sapi_response(&message, 250);
+    this->write_debug("Response received\n");
 
     if(response && message.command == BootloaderStarted)
     {
+        this->write_debug("Bootloader started. Logging in\n");
         this->login_sapi(this->password);
+        this->write_debug("Sent password. Waiting for response\n");
         response = this->wait_for_sapi_response(&message, 250);
+        this->write_debug("Response received\n");
         if(response && message.command == LoginOK)
         {
+            this->write_debug("Logged in\n");
             this->set_setting(setting, value, length);
             this->wait_for_sapi_response(&message, 250);
+            this->write_debug("Commit settings\n");
             this->commit_settings();
             this->wait_for_sapi_response(&message, 250);
         }
         else if(response && message.command == LoginError)
         {
             // Error logging in
+            this->write_debug("Login failed\n");
+            ret = false;
         }
         else
         {
             // Unknown error
+            this->write_debug("Error logging in\n");
+            ret = false;
         }
     }
     else
     {
         // Error
+        this->write_debug("Error starting bootloader\n");
+        ret = false;
     }
 
+    this->write_debug("Start protocol\n");
     this->start_protocol_stack();
+    this->wait_for_sapi_response(&message, 250);    // List get settings is returned
     this->wait_for_sapi_response(&message, 250);
-    this->wait_for_sapi_response(&message, 250);
+    return ret;
 }
 
 void NeoMesh::switch_sapi_aapi()
@@ -297,7 +295,10 @@ void NeoMesh::write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uin
     cmd[4 + data_length] = SAPI_COMMAND_TAIL;
 
     this->write_raw(cmd, 5 + data_length);
-    NcApiCtsActive(this->uart_num);  
+    NcApiCtsActive(this->uart_num);  // When in bootloader mode CTS is kept constantly low
+    
+    // For debugging
+    delay(1000);
 }
 
 void NeoMesh::write_raw(uint8_t *data, uint8_t length)
@@ -318,10 +319,12 @@ void NeoMesh::write_raw(uint8_t *data, uint8_t length)
 bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms)
 {
     // TODO: Return false after timeout
-    while(!this->sapi_parser.message_available())  // TODO: Create for function to wait for message with timeout
+    this->write_debug("Waiting for response\n");
+    while(!this->sapi_parser.message_available())
     {
         this->update();
     }
+    this->write_debug("Response received\n");
     *message = this->sapi_parser.get_pending_message();
     return true;
 }
@@ -372,6 +375,7 @@ void NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus *p)
 void NeoMesh::pass_through_cts0()
 {
     NcApiCtsActive(0);
+    Serial.println("CTS");
 }
 
 void NeoMesh::pass_through_cts1()
@@ -387,6 +391,12 @@ void NeoMesh::pass_through_cts2()
 void NeoMesh::pass_through_cts3()
 {
     NcApiCtsActive(3);
+}
+
+void NeoMesh::write_debug(const char * str)
+{
+    if(this->debug_serial)
+        this->debug_serial->print(str);
 }
 
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
@@ -406,6 +416,8 @@ void NcApiSupportMessageWritten(uint8_t n, void *callbackToken, uint8_t *finalMs
     // neo->message_written();
     // TODO: Eventually a callback needs to go all the way to the application
 }
+
+
 
 /*******************************************************************************/
 

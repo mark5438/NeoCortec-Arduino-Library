@@ -1,27 +1,41 @@
 #include <NeoMesh.h>
+#include <HardwareSerial.h>
 
-#define PROTOCOL_UART 0
-#define CTS_GPIO 9
-#define NODE_ID 0x11
+#define CTS_GPIO 2
+#define NODE_ID 0x0016
 
 NeoMesh * neo;
 
 uint32_t last;
+
+void acknowledged(uint8_t n, tNcApiHostAckNack * m)
+{
+  Serial2.print("Node ");
+  Serial2.print(m->originId);
+  Serial2.println(" acknowledged a message");
+}
+
 void setup()
 {
+  Serial2.begin(115200);
+  Serial2.println("Ready");
+  Serial1.begin(115200);
+  
+  pinMode(2, INPUT_PULLUP);
   pinMode(13, OUTPUT);
-  neo = new NeoMesh(PROTOCOL_UART, CTS_GPIO);
+  neo = new NeoMesh(&Serial1, CTS_GPIO);
   neo->start();
-  neo->change_node_id(0x6969);
+  neo->set_debug_serial(&Serial2);
+  neo->host_ack_callback = acknowledged;
+  neo->change_node_id(NODE_ID);
   last = millis();
-  digitalWrite(13, HIGH);
 }
 
 void loop()
 {
   neo->update();
 
-  if(millis() - last > 5000)
+  if (millis() - last > 5000)
   {
     uint8_t test[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
