@@ -1,6 +1,6 @@
 # NeoCortec Arduino Library
 
-Communicate over a NeoMesh network using an Arduino an this super user friendly library.
+Communicate over a NeoMesh network using an Arduino and this super user friendly library.
 
 <a href="https://www.markusrytter.com/NeoCortecArduinoLibraryDocs/class_neo_mesh.html">See NeoMesh class</a>
 
