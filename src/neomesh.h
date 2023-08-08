@@ -153,6 +153,8 @@ public:
 
     void set_debug_serial(Stream * debug_serial);
 
+    // TODO: Create new function definitions that doesn't take parameter n
+    // Remember to update samples
     pfnNcApiReadCallback read_callback = 0;
     pfnNcApiHostAckCallback host_ack_callback = 0;
     pfnNcApiHostAckCallback host_nack_callback = 0;
