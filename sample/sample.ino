@@ -8,7 +8,7 @@ NeoMesh * neo;
 
 uint32_t last;
 
-void acknowledged(uint8_t n, tNcApiHostAckNack * m)
+void acknowledged(tNcApiHostAckNack * m)
 {
   Serial2.print("Node ");
   Serial2.print(m->originId);
