@@ -150,6 +150,15 @@ public:
      * @param nodeId
      */
     void send_wes_respond(uint64_t uid, uint16_t nodeId);
+    
+    /**
+    * @brief Change the password the API should use to log into the NC module
+    * In order to change settings on the module, it needs to be in bootloader mode
+    * and logged in. The standard login password is "Lvl10". This function only needs to
+    * be called if the password on the NC module is different from "Lvl10"
+    * @param new_password An array of 5 bytes containing the password
+    */
+    void set_password(uint8_t new_password[5]);
 
     // TODO: Create new function definitions that doesn't take parameter n
     // Remember to update samples
@@ -189,7 +198,6 @@ private:
     void set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
     void commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
-    void set_password(uint8_t new_password[5]);
     bool change_setting(uint8_t setting, uint8_t * value, uint8_t length);
 
     static void read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength);
