@@ -73,6 +73,8 @@ void NeoMesh::update()
     while (this->serial->available())
     {
         char c = this->serial->read();
+
+        // TODO: Find out which function should get c
         NcApiRxData(this->uart_num, c);
         this->sapi_parser.push_char(c);
     }
