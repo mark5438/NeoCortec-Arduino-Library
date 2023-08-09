@@ -2,8 +2,14 @@
 
 Communicate over a NeoMesh network using an Arduino and this super user friendly library.
 
+## Installation
+Download the NeoCortecArduinoLibrary.zip file and import it to the Arduino IDE by pressing<br>
+`Sketch -> Include Library -> Add .ZIP library`
+
 ## Examples
 
+When library is imported, all examples can be found in the Arduino IDE under<br>
+`Files -> Examples -> NeoCortecArduinoLibrary`
 
 ### Send acknowledged messages
 ```
