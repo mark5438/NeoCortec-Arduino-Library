@@ -53,6 +53,153 @@
 #define DEFAULT_PASSWORD_LVL10 {0x4c, 0x76, 0x6c, 0x31, 0x30}
 
 /*******************************************************************************
+ *    Type defines
+ ******************************************************************************/
+
+
+/**
+ * \brief Application provided function that NcApi calls whenever any valid NeocCortec messages 
+ * has been received
+ *
+ * \details This function will deliver a byte array containing the received raw UART frame. <br>
+ * It is normally not necessary to register for this callback, as there are other callbacks 
+ * which are specific to the various types of application data.
+ *
+ * @param msg Pointer to the message
+ * @param msgLength Message length in bytes
+ */
+typedef void (*NeoMeshReadCallback)(uint8_t * msg, uint8_t msgLength);
+
+/**
+ * \brief Application provided functions that NcApi calls when a <br> 
+ * message type "0x50: Acknowledge for previously sent packet" is received, or a <br> 
+ * message type "0x51: Non-Acknowledge for previously sent packet" is received.
+ *
+ * \details The appropriate function is called when a HostAck or HostNAck message 
+ * has been received for a previously sent payload package.
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshHostAckCallback)(tNcApiHostAckNack * m);
+
+
+
+/**
+ * \brief Application provided functions that NcApi calls when a <br> 
+ * message type "0x56: Uapp packet send.<br> 
+ * message type "0x57: Uapp packet was droped.
+ *
+ * \details The appropriate function is called when a Uapp send or dropped message 
+ * has been received for a previously sent payload package.
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshHostUappStatusCallback)(tNcApiHostUappStatus * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x52: Host Data" is received.
+ *
+ * \details The callback is issued when the modules receive payload data, that requires acknowledge, 
+ * from another module in the NEOCORTEC mesh network.
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshHostDataCallback)(tNcApiHostData * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x53: Host Data HAPA" is received.
+ *
+ * \details The callback is issued when the modules receive payload data, that requires acknowledge, 
+ * from another module in the NEOCORTEC mesh network which has been configured to use the 
+ * High Precision Packet Age feature (HAPA). 
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshHostDataHapaCallback)(tNcApiHostDataHapa * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x54: Host Data Unacknowledged" is received.
+ *
+ * \details The callback is issued when the modules receive payload data, that NOT requires acknowledge, 
+ * from another module in the NEOCORTEC mesh network.
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void(*NeoMeshHostUappDataCallback)(tNcApiHostUappData * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x55: Host Data HAPA Unacknowledged" is received.
+ *
+ * \details The callback is issued when the modules receive payload data, that requires acknowledge, 
+ * from another module in the NEOCORTEC mesh network which has been configured to use the 
+ * High Precision Packet Age feature (HAPA). 
+ * The callback function delivers a pointer to a struct containing the relevant information.
+ *
+ * @param m Strongly typed message
+ */
+typedef void(*NeoMeshHostUappDataHapaCallback)(tNcApiHostUappDataHapa * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x58: Node Info Reply" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshNodeInfoReplyCallback)(tNcApiNodeInfoReply * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x59: Neighbor List Reply" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshNeighborListReplyCallback)(tNcApiNeighborListReply * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x5c: Route Info Request Reply" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshRouteInfoRequestReplyCallback)(tNcApiRouteInfoRequestReply * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x5a: Network Command Reply" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void(*NeoMeshNetCmdResponseCallback)(tNcApiNetCmdReply * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x60: WES Status" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshWesStatusCallback)(tNcApiWesStatus * m);
+
+/**
+ * \brief Application provided function that NcApi calls when a <br> 
+ * message type "0x61: WES Setup Request" is received.
+ *
+ * @param m Strongly typed message
+ */
+typedef void (*NeoMeshWesSetupRequestCallback)(tNcApiWesSetupRequest * m);
+
+
+
+
+/*******************************************************************************
  *    Class prototypes
  ******************************************************************************/
 
@@ -162,13 +309,13 @@ public:
 
     // TODO: Create new function definitions that doesn't take parameter n
     // Remember to update samples
-    pfnNcApiReadCallback read_callback = 0;
-    pfnNcApiHostAckCallback host_ack_callback = 0;
-    pfnNcApiHostAckCallback host_nack_callback = 0;
-    pfnNcApiHostDataCallback host_data_callback = 0;
-    pfnNcApiHostDataHapaCallback host_data_hapa_callback = 0;
-    pfnNcApiWesSetupRequestCallback wes_setup_request_callback = 0;
-    pfnNcApiWesStatusCallback wes_status_callback = 0;
+    NeoMeshReadCallback read_callback = 0;
+    NeoMeshHostAckCallback host_ack_callback = 0;
+    NeoMeshHostAckCallback host_nack_callback = 0;
+    NeoMeshHostDataCallback host_data_callback = 0;
+    NeoMeshHostDataHapaCallback host_data_hapa_callback = 0;
+    NeoMeshWesSetupRequestCallback wes_setup_request_callback = 0;
+    NeoMeshWesStatusCallback wes_status_callback = 0;
 
     // IGNORE:
     static void pass_through_cts0();

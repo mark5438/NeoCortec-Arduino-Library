@@ -18,14 +18,12 @@ void acknowledged(uint8_t n, tNcApiHostAckNack * m)
 void setup()
 {
   Serial2.begin(115200);
-  Serial2.println("Ready");
   Serial1.begin(115200);
   
   pinMode(2, INPUT_PULLUP);
   pinMode(13, OUTPUT);
   neo = new NeoMesh(&Serial1, CTS_GPIO);
   neo->start();
-  neo->set_debug_serial(&Serial2);
   neo->host_ack_callback = acknowledged;
   neo->change_node_id(NODE_ID);
   last = millis();

@@ -168,12 +168,6 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
     NcApiSendWesResponse(this->uart_num, &args);
 }
 
-void NeoMesh::set_debug_serial(Stream * debug_serial)
-{
-    this->debug_serial = debug_serial;
-}
-
-
 /*******************************************************************************
  *    Private Class/Functions
  ******************************************************************************/
@@ -312,43 +306,43 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_
 void NeoMesh::read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength)
 {
     if (instances[n]->read_callback != 0)
-        instances[n]->read_callback(n, msg, msgLength);
+        instances[n]->read_callback(msg, msgLength);
 }
 
  void NeoMesh::host_ack_callback_(uint8_t n, tNcApiHostAckNack *p)
 {
     if (instances[n]->host_ack_callback != 0)
-        instances[n]->host_ack_callback(n, p);
+        instances[n]->host_ack_callback(p);
 }
 
 void NeoMesh::host_nack_callback_(uint8_t n, tNcApiHostAckNack *p)
 {
     if (instances[n]->host_nack_callback != 0)
-        instances[n]->host_nack_callback(n, p);
+        instances[n]->host_nack_callback(p);
 }
 
 void NeoMesh::host_data_callback_(uint8_t n, tNcApiHostData *m)
 {
     if (instances[n]->host_data_callback != 0)
-        instances[n]->host_data_callback(n, m);
+        instances[n]->host_data_callback(m);
 }
 
 void NeoMesh::host_data_hapa_callback_(uint8_t n, tNcApiHostDataHapa *p)
 {
     if (instances[n]->host_data_hapa_callback != 0)
-        instances[n]->host_data_hapa_callback(n, p);
+        instances[n]->host_data_hapa_callback(p);
 }
 
 void NeoMesh::wes_setup_request_callback_(uint8_t n, tNcApiWesSetupRequest *p)
 {
     if (instances[n]->wes_setup_request_callback != 0)
-        instances[n]->wes_setup_request_callback(n, p);
+        instances[n]->wes_setup_request_callback(p);
 }
 
 void NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus *p)
 {
     if (instances[n]->wes_status_callback != 0)
-        instances[n]->wes_status_callback(n, p);
+        instances[n]->wes_status_callback(p);
     return ;
 }
 
