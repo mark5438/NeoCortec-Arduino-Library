@@ -70,22 +70,12 @@ void NeoMesh::start()
 
 void NeoMesh::update()
 {
-    bool avb = this->serial->available();
-    if(avb)
-        this->write_debug("<--- ");
     while (this->serial->available())
     {
         char c = this->serial->read();
-
-        char str[128];
-        sprintf(str, "0x%02X ", c);
-        this->write_debug(str);
-
         NcApiRxData(this->uart_num, c);
         this->sapi_parser.push_char(c);
     }
-    if(avb)
-        this->write_debug("\n");
 }
 
 void NeoMesh::set_password(uint8_t new_password[5])
@@ -135,9 +125,7 @@ void NeoMesh::send_unacknowledged(uint16_t destNodeId, uint8_t port, uint16_t ap
     apiStatus = NcApiSendUnacknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        char errorStr[256];
-        sprintf(errorStr, "Failed to send acknowledged message. Status: %d\n", apiStatus);
-        this->write_debug(errorStr);
+        
     }
 }
 
@@ -153,9 +141,7 @@ void NeoMesh::send_acknowledged(uint16_t destNodeId, uint8_t port, uint8_t *payl
     apiStatus = NcApiSendAcknowledged(this->uart_num, &args);
     if (apiStatus != NCAPI_OK)
     {
-        char errorStr[256];
-        sprintf(errorStr, "Failed to send unacknowledged message. Status: %d\n", apiStatus);
-        this->write_debug(errorStr);
+        // TODO: Tell application something went wrong. Maybe map error codes to error strings
     }
 }
 
@@ -195,49 +181,37 @@ bool NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
     // TODO: when calling wait_for_sapi_response, return value should be checked
     bool ret = true;
     tNcSapiMessage message;
-    this->write_debug("Switch SAPI AAPI\n");
     this->switch_sapi_aapi();
-    this->write_debug("Request sent\n");
     bool response = this->wait_for_sapi_response(&message, 250);
-    this->write_debug("Response received\n");
 
     if(response && message.command == BootloaderStarted)
     {
-        this->write_debug("Bootloader started. Logging in\n");
         this->login_sapi(this->password);
-        this->write_debug("Sent password. Waiting for response\n");
         response = this->wait_for_sapi_response(&message, 250);
-        this->write_debug("Response received\n");
         if(response && message.command == LoginOK)
         {
-            this->write_debug("Logged in\n");
             this->set_setting(setting, value, length);
             this->wait_for_sapi_response(&message, 250);
-            this->write_debug("Commit settings\n");
             this->commit_settings();
             this->wait_for_sapi_response(&message, 250);
         }
         else if(response && message.command == LoginError)
         {
             // Error logging in
-            this->write_debug("Login failed\n");
             ret = false;
         }
         else
         {
             // Unknown error
-            this->write_debug("Error logging in\n");
             ret = false;
         }
     }
     else
     {
         // Error
-        this->write_debug("Error starting bootloader\n");
         ret = false;
     }
 
-    this->write_debug("Start protocol\n");
     this->start_protocol_stack();
     this->wait_for_sapi_response(&message, 250);    // List get settings is returned
     this->wait_for_sapi_response(&message, 250);
@@ -325,12 +299,10 @@ void NeoMesh::write_raw(uint8_t *data, uint8_t length)
 bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms)
 {
     // TODO: Return false after timeout
-    this->write_debug("Waiting for response\n");
     while(!this->sapi_parser.message_available())
     {
         this->update();
     }
-    this->write_debug("Response received\n");
     *message = this->sapi_parser.get_pending_message();
     return true;
 }
@@ -397,12 +369,6 @@ void NeoMesh::pass_through_cts2()
 void NeoMesh::pass_through_cts3()
 {
     NcApiCtsActive(3);
-}
-
-void NeoMesh::write_debug(const char * str)
-{
-    if(this->debug_serial)
-        this->debug_serial->print(str);
 }
 
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)
