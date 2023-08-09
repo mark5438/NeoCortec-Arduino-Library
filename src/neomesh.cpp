@@ -25,12 +25,10 @@
  *    Private Defines
  ******************************************************************************/
 
-const int number_of_uarts = 1;
-
-NeoMesh *instances[number_of_uarts];
-
-tNcApi g_ncApi[number_of_uarts];
-uint8_t g_numberOfNcApis = number_of_uarts;
+// Assuming that only one instance will be used
+NeoMesh * instances[1];
+tNcApi g_ncApi[1];
+uint8_t g_numberOfNcApis = 1;
 tNcApiRxHandlers ncRx;
 
 /*******************************************************************************
@@ -44,7 +42,7 @@ NeoMesh::NeoMesh(Stream * serial, uint8_t cts_pin)
     this->serial = serial;
 
     pinMode(cts_pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts0, FALLING);
+    attachInterrupt(digitalPinToInterrupt(cts_pin), NeoMesh::pass_through_cts, FALLING);
 }
 
 void NeoMesh::start()
@@ -346,25 +344,9 @@ void NeoMesh::wes_status_callback_(uint8_t n, tNcApiWesStatus *p)
     return ;
 }
 
-void NeoMesh::pass_through_cts0()
+void NeoMesh::pass_through_cts()
 {
     NcApiCtsActive(0);
-    Serial.println("CTS");
-}
-
-void NeoMesh::pass_through_cts1()
-{
-    NcApiCtsActive(1);
-}
-
-void NeoMesh::pass_through_cts2()
-{
-    NcApiCtsActive(2);
-}
-
-void NeoMesh::pass_through_cts3()
-{
-    NcApiCtsActive(3);
 }
 
 NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t *finalMsg, uint8_t finalMsgLength)

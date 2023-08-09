@@ -307,8 +307,6 @@ public:
     */
     void set_password(uint8_t new_password[5]);
 
-    // TODO: Create new function definitions that doesn't take parameter n
-    // Remember to update samples
     NeoMeshReadCallback read_callback = 0;
     NeoMeshHostAckCallback host_ack_callback = 0;
     NeoMeshHostAckCallback host_nack_callback = 0;
@@ -318,18 +316,13 @@ public:
     NeoMeshWesStatusCallback wes_status_callback = 0;
 
     // IGNORE:
-    static void pass_through_cts0();
-    static void pass_through_cts1();
-    static void pass_through_cts2();
-    static void pass_through_cts3();
+    static void pass_through_cts();
 
 private:
     uint8_t uart_num;
     uint8_t cts_pin;
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
-
     Stream * serial;
-
     SAPIParser sapi_parser;
 
     uint8_t password[5] = DEFAULT_PASSWORD_LVL10; // TODO: Create setter function
