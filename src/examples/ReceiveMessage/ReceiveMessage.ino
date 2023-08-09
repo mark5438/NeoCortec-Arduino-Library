@@ -8,7 +8,7 @@
 
 NeoMesh * neo;
 
-void host_data(uint8_t n, tNcApiHostData * m)
+void host_data(tNcApiHostData * m)
 {
     Serial.print("Data received from: ");
     Serial.println(m->originId);
