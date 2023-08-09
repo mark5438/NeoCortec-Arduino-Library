@@ -166,44 +166,28 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
     NcApiSendWesResponse(this->uart_num, &args);
 }
 
-/*******************************************************************************
- *    Private Class/Functions
- ******************************************************************************/
-
 bool NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
 {
     // TODO: when calling wait_for_sapi_response, return value should be checked
     bool ret = true;
     tNcSapiMessage message;
-    this->switch_sapi_aapi();
-    bool response = this->wait_for_sapi_response(&message, 250);
-
-    if(response && message.command == BootloaderStarted)
+    if(this->switch_sapi_aapi())
     {
-        this->login_sapi(this->password);
-        response = this->wait_for_sapi_response(&message, 250);
-        if(response && message.command == LoginOK)
+        if(this->login_sapi())
         {
             this->set_setting(setting, value, length);
             this->wait_for_sapi_response(&message, 250);
             this->commit_settings();
             this->wait_for_sapi_response(&message, 250);
         }
-        else if(response && message.command == LoginError)
-        {
-            // Error logging in
-            ret = false;
-        }
         else
         {
-            // Unknown error
-            ret = false;
+            ret = false; // Login error
         }
     }
     else
     {
-        // Error
-        ret = false;
+        ret = false; // Error
     }
 
     this->start_protocol_stack();
@@ -212,15 +196,25 @@ bool NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
     return ret;
 }
 
-void NeoMesh::switch_sapi_aapi()
+bool NeoMesh::switch_sapi_aapi()
 {
+    tNcSapiMessage message;
     uint8_t cmd = 0x0B;
     this->write_raw(&cmd, 1);
+    bool response = this->wait_for_sapi_response(&message, 250);
+    bool success = response && message.command == BootloaderStarted;
+    this->module_mode = success ? SAPI_LOGGED_OUT : AAPI;
+    return success;
 }
 
-void NeoMesh::login_sapi(uint8_t * password)
+bool NeoMesh::login_sapi()
 {
-    this->write_sapi_command(SAPI_COMMAND_LOGIN1, SAPI_COMMAND_LOGIN2, password, 5);
+    tNcSapiMessage message;
+    this->write_sapi_command(SAPI_COMMAND_LOGIN1, SAPI_COMMAND_LOGIN2, this->password, 5);
+    bool response = this->wait_for_sapi_response(&message, 250);
+    bool success = response && message.command == LoginOK;
+    this->module_mode = success ? SAPI : SAPI_LOGGED_OUT;
+    return success;
 }
 
 void NeoMesh::start_bootloader()
@@ -233,9 +227,28 @@ void NeoMesh::start_protocol_stack()
     this->write_sapi_command(SAPI_COMMAND_START_PROTOCOL1, SAPI_COMMAND_START_PROTOCOL2, nullptr, 0);
 }
 
-void NeoMesh::get_setting(uint8_t setting)
+bool NeoMesh::get_setting(uint8_t setting, NcSetting * setting_ret)
 {
+    tNcModuleMode old_module_mode = this->module_mode;
+    if(this->module_mode == AAPI)
+        this->switch_sapi_aapi();
+
+    if(this->module_mode == SAPI_LOGGED_OUT)
+        this->login_sapi();
+
+    tNcSapiMessage response;
     this->write_sapi_command(SAPI_COMMAND_GET_SETTING_FLASH1, SAPI_COMMAND_GET_SETTING_FLASH2, &setting, 1);
+    bool response_received = this->wait_for_sapi_response(&response, 250);
+    if(response_received && response.command == SettingValue)
+    {
+        memcpy(setting_ret->value, response.data, response.data_length);
+        setting_ret->length = response.data_length;
+    }
+
+    if(old_module_mode == AAPI)
+        this->start_protocol_stack();
+
+    return false;
 }
 
 void NeoMesh::set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length)
@@ -270,9 +283,6 @@ void NeoMesh::write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uin
 
     this->write_raw(cmd, 5 + data_length);
     NcApiCtsActive(this->uart_num);  // When in bootloader mode CTS is kept constantly low
-    
-    // For debugging
-    delay(1000);
 }
 
 void NeoMesh::write_raw(uint8_t *data, uint8_t length)
@@ -300,6 +310,10 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_
     *message = this->sapi_parser.get_pending_message();
     return true;
 }
+
+/*******************************************************************************
+ *    Private Class/Functions
+ ******************************************************************************/
 
 void NeoMesh::read_callback_(uint8_t n, uint8_t *msg, uint8_t msgLength)
 {

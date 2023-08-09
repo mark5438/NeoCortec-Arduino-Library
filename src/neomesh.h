@@ -56,6 +56,16 @@
  *    Type defines
  ******************************************************************************/
 
+typedef struct {
+    uint8_t value[32];
+    uint8_t length;
+} NcSetting;
+
+typedef enum {
+    SAPI_LOGGED_OUT,
+    SAPI,
+    AAPI
+} tNcModuleMode;
 
 /**
  * \brief Application provided function that NcApi calls whenever any valid NeocCortec messages 
@@ -308,14 +318,14 @@ public:
     void set_password(uint8_t new_password[5]);
 
 
-    void switch_sapi_aapi();
-    void login_sapi(uint8_t * password);
+    bool switch_sapi_aapi();
+    bool login_sapi();
     void change_node_id_sapi(uint16_t nodeid);
     void write_raw(uint8_t *data, uint8_t length);
     bool wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms);
     void start_bootloader();
     void start_protocol_stack();
-    void get_setting(uint8_t setting);  // TODO: Doesn't get anything. Just requests
+    bool get_setting(uint8_t setting, NcSetting * setting_ret);
     void set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
     void commit_settings();
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
@@ -338,6 +348,7 @@ private:
     uint32_t baudrate = DEFAULT_NEOCORTEC_BAUDRATE;
     Stream * serial;
     SAPIParser sapi_parser;
+    tNcModuleMode module_mode = AAPI;
 
     uint8_t password[5] = DEFAULT_PASSWORD_LVL10; // TODO: Create setter function
 

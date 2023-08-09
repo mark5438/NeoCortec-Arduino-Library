@@ -25,7 +25,13 @@ void setup()
   neo = new NeoMesh(&Serial1, CTS_GPIO);
   neo->start();
   neo->host_ack_callback = acknowledged;
-  neo->change_node_id(NODE_ID);
+  // neo->change_node_id(NODE_ID);
+
+  NcSetting nodeid;
+  neo->get_setting(NODE_ID_SETTING, &nodeid);
+
+  Serial2.write(nodeid.value, nodeid.length);
+  
   last = millis();
 }
 
