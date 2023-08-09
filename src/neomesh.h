@@ -419,6 +419,12 @@ public:
     */
     bool change_setting(uint8_t setting, uint8_t * value, uint8_t length);
 
+    /**
+    * @brief get module mode
+    * @return tNcModuleMode choices: AAPI, SAPI, SAPI_LOGGED_OUT
+    */
+    tNcModuleMode get_module_mode();
+
     NeoMeshReadCallback read_callback = 0;
     NeoMeshHostAckCallback host_ack_callback = 0;
     NeoMeshHostAckCallback host_nack_callback = 0;

@@ -313,6 +313,12 @@ bool NeoMesh::wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_
     return true;
 }
 
+tNcModuleMode NeoMesh::get_module_mode()
+{
+    return this->module_mode;
+}
+
+
 /*******************************************************************************
  *    Private Class/Functions
  ******************************************************************************/
