@@ -310,25 +310,113 @@ public:
     
     /**
     * @brief Change the password the API should use to log into the NC module
-    * In order to change settings on the module, it needs to be in bootloader mode
+    * @details In order to change settings on the module, it needs to be in bootloader mode
     * and logged in. The standard login password is "Lvl10". This function only needs to
     * be called if the password on the NC module is different from "Lvl10"
     * @param new_password An array of 5 bytes containing the password
     */
     void set_password(uint8_t new_password[5]);
 
-
+    /**
+    * @brief Switch NeoCortec module to SAPI mode
+    * @details The NeoCortec module can be in two different modes: AAPI and SAAPI.
+    * When in AAPI mode it is able to send messages to and receive messages from
+    * a NeoMesh network. When in SAPI mode it is able to change module settings.
+    * Next step after switching to SAPI mode will often be to log in with password
+    * @return True if the module successfully switched to SAPI mode. False otherwise
+    */
     bool switch_sapi_aapi();
+
+    /**
+    * @brief Log in
+    * @details Log in to bootloader. This must be done before changing any settings
+    * @return true if logged in. False otherwise. If module is not in SAPI mode or
+    * already logged in, this function will return false;
+    */
     bool login_sapi();
+
+    /**
+    * @brief Change modules node id
+    * @details Change ID of node. Important: This function will automatically
+    * enter SAPI mode and log in
+    * @param nodeid The new node id
+    */
     void change_node_id_sapi(uint16_t nodeid);
+
+    /**
+    * @brief Writes raw bytes to protocol uart
+    * @param data Data to write
+    * @param length Length of data array
+    */
     void write_raw(uint8_t *data, uint8_t length);
+
+    /**
+    * @brief Wait for system interface to send response
+    * @details Waits for system interface to return a response. If it takes longer than
+    * the given timeout the function will return before a response is received
+    * @param message Pointer to a message object in which to put the response data
+    * @param timeout_ms Maximum amount of time this should wait. In milliseconds
+    * @return True if message was received. False if timed out
+    */
     bool wait_for_sapi_response(tNcSapiMessage * message, uint32_t timeout_ms);
+
+    /**
+    * @brief Send command to start bootloader
+    * @details This function is useless. When entering system uart mode on AAPI uart
+    * the bootloader will automatically be started.
+    */
     void start_bootloader();
+
+    /**
+    * @brief Starts the protocol
+    * @details If bootloader mode is entered and settings are changed, this function
+    * should be called when done, so that the NC module can once again join a mesh network
+    * and send and receive messages
+    */
     void start_protocol_stack();
+
+    /**
+    * @brief Gets a setting from the NC modules flash
+    * @details This setting is safe to call at all times. It will automatically enter bootloader mode
+    * if it is not done before the function is called, in which case it will also start the protocol stack
+    * when the settings is retrieved
+    * @param setting The id of the setting to be retrieved
+    * @param setting_ret A NcSetting object in which to put the info of the retrieved setting
+    * @return true if setting is rerieved. False otherwise
+    */
     bool get_setting(uint8_t setting, NcSetting * setting_ret);
+
+    /**
+    * @brief Changes a setting in the NC modules RAM
+    * @details Before calling this function the NC module must be in SAPI mode and logged in.
+    * The setting being set is only saved to ram, so when finishd commit_settings"()" must be called.
+    * If you wish to change a setting and for the API to automatically enter and exit bootloader mode,
+    * call the function change_setting"()" instead
+    * @param setting The id of the setting to change
+    * @param setting_value Pointer to the setting value
+    * @param setting_value_length Length of setting value
+    */
     void set_setting(uint8_t setting, uint8_t *setting_value, uint8_t setting_value_length);
+
+    /**
+    * @brief Move all settings in RAM to FLASH
+    */
     void commit_settings();
+
+    /**
+    * @brief Write a system interface command
+    * @details Before calling this function the NC module must be in bootloader mode and logged in
+    * @param cmd1 Command one
+    * @param cmd2 Command two
+    * @param data Data to pass if command requires
+    * @param data_length Length of passed data
+    */
     void write_sapi_command(uint8_t cmd1, uint8_t cmd2, uint8_t * data, uint8_t data_length);
+
+    /**
+    * @brief Change a setting in the NC module
+    * @details This is safe to call at all times. Bootloader mode will be entered and exited
+    */
     bool change_setting(uint8_t setting, uint8_t * value, uint8_t length);
 
     NeoMeshReadCallback read_callback = 0;

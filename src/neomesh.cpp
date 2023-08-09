@@ -168,12 +168,11 @@ void NeoMesh::send_wes_respond(uint64_t uid, uint16_t nodeId)
 
 bool NeoMesh::change_setting(uint8_t setting, uint8_t * value, uint8_t length)
 {
-    // TODO: when calling wait_for_sapi_response, return value should be checked
     bool ret = true;
     tNcSapiMessage message;
-    if(this->switch_sapi_aapi())
+    if(this->module_mode != AAPI || this->switch_sapi_aapi())
     {
-        if(this->login_sapi())
+        if(this->module_mode != SAPI_LOGGED_OUT || this->login_sapi())
         {
             this->set_setting(setting, value, length);
             this->wait_for_sapi_response(&message, 250);
@@ -209,6 +208,9 @@ bool NeoMesh::switch_sapi_aapi()
 
 bool NeoMesh::login_sapi()
 {
+    if(this->module_mode != SAPI_LOGGED_OUT)
+        return false;
+
     tNcSapiMessage message;
     this->write_sapi_command(SAPI_COMMAND_LOGIN1, SAPI_COMMAND_LOGIN2, this->password, 5);
     bool response = this->wait_for_sapi_response(&message, 250);
