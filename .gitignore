@@ -2,3 +2,5 @@ html/*
 latex/*
 install.bat
 sample.ino
+src/html/*
+src/latex/*
