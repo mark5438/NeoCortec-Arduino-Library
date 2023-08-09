@@ -61,9 +61,24 @@ typedef struct {
     uint8_t length;
 } NcSetting;
 
+/**
+* @brief Enum to keep track of module modes
+*/
 typedef enum {
+
+    /**
+    * @brief Module is in system interface mode, but not yet logged in
+    */
     SAPI_LOGGED_OUT,
+
+    /**
+    * @brief Module is in system interface mode and ready to receive system commands
+    */
     SAPI,
+
+    /**
+    * @brief Module is in application mode and ready to send and receive data
+    */
     AAPI
 } tNcModuleMode;
 
